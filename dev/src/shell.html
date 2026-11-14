@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="资本帝国">
+<meta name="theme-color" content="#0b1220">
+<meta name="format-detection" content="telephone=no">
+<title>资本帝国实验室 · Capital Empire Lab</title>
+<style>
+:root{--bg:#0b1220;--pan:rgba(13,20,36,.94);--bd:rgba(148,163,184,.18);--tx:#e2e8f0;--mu:#94a3b8;--gd:#22c55e;--bad:#f43f5e;--gold:#fbbf24}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;font-size:13px;user-select:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab}
+canvas#c.drag{cursor:grabbing}
+.panel{background:var(--pan);border:1px solid var(--bd);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4)}
+#top{position:fixed;top:8px;left:8px;right:8px;min-height:50px;display:flex;align-items:center;gap:8px;padding:4px 10px;z-index:5;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;line-height:1.15;min-width:70px}
+.stat b{font-size:14px;font-variant-numeric:tabular-nums}
+.stat span{color:var(--mu);font-size:11px}
+.sep{flex:1}
+button{font:inherit;color:var(--tx);background:#253247;border:1px solid var(--bd);border-radius:8px;padding:6px 10px;cursor:pointer}
+#top button{padding:6px 8px}
+button:hover{background:#2f4a66}
+button.on{background:#0284c7;border-color:#38bdf8}
+button.pri{background:#0284c7;border:0;font-weight:600}
+button.dng{background:#4c1d2a;border-color:#9f1239}
+button:disabled{opacity:.4;cursor:not-allowed}
+.grp{display:flex;gap:4px}
+.spd button{width:32px;padding:6px 0!important}
+#build{position:fixed;left:8px;top:72px;width:176px;padding:8px;z-index:5;display:flex;flex-direction:column;gap:5px;max-height:calc(100% - 200px);overflow:auto}
+#btabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:3px}
+#btabs button{padding:5px 0;font-size:12px}
+h4{margin:2px 2px 4px;font-size:12px;color:var(--mu);font-weight:600;letter-spacing:1px}
+.bbtn{display:flex;align-items:center;gap:8px;text-align:left;padding:6px 8px}
+.bbtn .ic{font-size:19px;width:24px;text-align:center}
+.bbtn small{display:block;color:var(--mu);font-size:11px}
+#goal{position:fixed;left:8px;bottom:44px;width:176px;padding:9px;z-index:5;font-size:12px}
+#goal .t{color:var(--gold);font-weight:700;margin-bottom:4px}
+#side{position:fixed;right:8px;top:72px;width:320px;max-height:calc(100% - 240px);overflow:auto;padding:12px;z-index:5}
+.hidden{display:none!important}
+.row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;gap:8px}
+.row .k{color:var(--mu)}
+.card{background:#162133;border:1px solid var(--bd);border-radius:9px;padding:8px;margin:7px 0}
+select,input[type=number],input[type=text]{font:inherit;color:var(--tx);background:#0f172a;border:1px solid var(--bd);border-radius:7px;padding:4px 6px}
+input[type=range]{width:100%;accent-color:#38bdf8}
+.bar{height:7px;background:#1e293b;border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:#22c55e}
+.pos{color:var(--gd)}.neg{color:var(--bad)}.mu{color:var(--mu)}
+#ticker{position:fixed;left:8px;right:8px;bottom:8px;height:28px;padding:0 12px;display:flex;align-items:center;gap:10px;z-index:5;overflow:hidden;white-space:nowrap;font-size:12px}
+#ticker .lab{color:var(--gold);font-weight:700}
+#modal{position:fixed;inset:0;background:rgba(2,6,23,.55);z-index:50;display:flex;align-items:center;justify-content:center}
+#modal .win{width:min(1000px,96vw);max-height:88vh;display:flex;flex-direction:column}
+.win-h{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd);font-size:16px;font-weight:700}
+#mb{padding:12px 14px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:5px 7px;border-bottom:1px solid rgba(148,163,184,.1);text-align:right;white-space:nowrap}
+th{color:var(--mu);font-weight:600;font-size:12px}
+th:first-child,td:first-child{text-align:left}
+#toasts{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+.toast{padding:7px 13px;border-radius:9px;background:#0f172a;border:1px solid var(--bd)}
+#start{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-start;justify-content:center;background:rgba(2,6,23,.8);overflow:auto}
+#start .win{width:min(760px,95vw);padding:22px;margin:20px}
+#start h1{margin:0 0 4px;font-size:26px;color:#7dd3fc}
+.opts{display:flex;gap:6px;margin:6px 0 12px;flex-wrap:wrap}
+.opts button{flex:1;min-width:110px}
+.opts button small,.rv small{display:block;color:var(--mu);font-size:11px}
+#rivals{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px;margin:6px 0 12px;max-height:240px;overflow:auto}
+#rivals button{text-align:left;padding:6px 8px}
+#mini{position:fixed;right:8px;bottom:44px;z-index:5;padding:5px;cursor:pointer}
+#tip{position:fixed;pointer-events:none;z-index:15;padding:6px 9px;font-size:12px;border-radius:8px;background:#0f172a;border:1px solid var(--bd)}
+.tag{display:inline-block;padding:1px 7px;border-radius:20px;font-size:11px;background:rgba(148,163,184,.15)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fd{display:flex;gap:10px;align-items:center}
+.fd .av{font-size:28px;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1e293b;flex:none}
+.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+@media (max-width:1000px){#build{width:150px}#side{width:270px}.stat{min-width:60px}}
+
+html,body{position:fixed;inset:0;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}
+canvas#c{touch-action:none}
+button{touch-action:manipulation}
+#menu{display:flex;gap:6px;align-items:center;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+#menu::-webkit-scrollbar{display:none}
+#top button,#menu .grp{flex:none;white-space:nowrap}
+#heat{position:fixed;right:8px;bottom:148px;z-index:5;padding:4px;display:flex;gap:3px;align-items:center;font-size:12px}
+#build,#side{top:calc(var(--toph,50px) + 16px)}
+.mob{display:none!important}
+#fab{display:none}
+#bconf{position:fixed;left:50%;transform:translateX(-50%);bottom:50px;z-index:8;display:flex;gap:8px;align-items:center;padding:10px 12px;width:min(520px,94vw);font-size:13px}
+#bconf.hidden{display:none}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.mev{display:flex;gap:10px;align-items:flex-start}
+.mev .ic{font-size:26px}
+/* ===== 手机 / iPhone ===== */
+body.m{font-size:13px}
+body.m .mob{display:flex!important}
+body.m #top{top:calc(env(safe-area-inset-top) + 4px);left:calc(env(safe-area-inset-left) + 4px);right:calc(env(safe-area-inset-right) + 4px);gap:4px 8px;padding:5px 8px;min-height:0;border-radius:12px}
+body.m .stat{min-width:0}
+body.m .stat span{font-size:10px}
+body.m .stat b{font-size:13px}
+body.m #spd{margin-left:0;flex:none}
+body.m #spd button{width:34px;height:32px}
+body.m #menu{flex-basis:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px}
+body.m #menu::-webkit-scrollbar{display:none}
+body.m #menu .sep{display:none}
+body.m #menu button,body.m #menu .grp{flex:none}
+body.m #top button{padding:7px 9px}
+body.m #build{left:0;right:0;bottom:0;top:auto;width:auto;max-height:52vh;border-radius:18px 18px 0 0;padding:10px 10px calc(env(safe-area-inset-bottom) + 12px);transform:translateY(110%);transition:transform .22s;z-index:9}
+body.m.showb #build{transform:none}
+body.m #blist{display:grid!important;grid-template-columns:1fr 1fr}
+body.m #btabs{grid-template-columns:repeat(4,1fr)}
+body.m #build>.mu{display:none}
+body.m #side{left:0;right:0;bottom:0;top:auto;width:auto;max-height:56vh;border-radius:18px 18px 0 0;padding:12px 12px calc(env(safe-area-inset-bottom) + 14px);z-index:9}
+body.m #side::before{content:'';display:block;width:40px;height:4px;border-radius:2px;background:#475569;margin:-4px auto 8px}
+body.m #mini{display:none}
+body.m #goal{top:calc(env(safe-area-inset-top) + var(--toph,90px) + 10px);bottom:auto;left:calc(env(safe-area-inset-left) + 4px);width:auto;max-width:58vw;padding:4px 9px;font-size:11px;opacity:.92}
+body.m #goal .bar{display:none}
+body.m #goal .t{display:inline;margin-right:4px}
+body.m #ticker{bottom:calc(env(safe-area-inset-bottom) + 6px);left:calc(env(safe-area-inset-left) + 74px);right:calc(env(safe-area-inset-right) + 4px);height:28px;font-size:11px;padding:0 8px}
+body.m #ticker .lab{display:none}
+body.m #heat{bottom:calc(env(safe-area-inset-bottom) + 40px);right:calc(env(safe-area-inset-right) + 4px);font-size:11px}
+body.m #heat button{padding:5px 8px}
+body.m #fab{display:flex;position:fixed;left:calc(env(safe-area-inset-left) + 8px);bottom:calc(env(safe-area-inset-bottom) + 6px);z-index:8;width:58px;height:58px;border-radius:50%;font-size:26px;align-items:center;justify-content:center;background:#0284c7;border:2px solid #38bdf8;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+body.m.showb #fab,body.m.sideopen #fab{display:none}
+body.m.sideopen #heat,body.m.showb #heat{display:none}
+body.m #bconf{bottom:calc(env(safe-area-inset-bottom) + 70px);flex-wrap:wrap}
+body.m #bconf button{padding:10px 14px}
+body.m #modal .win{width:100vw;height:100%;max-height:none;border-radius:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+body.m .win-h button{padding:8px 14px}
+body.m #mb{padding:10px;-webkit-overflow-scrolling:touch}
+body.m #mb table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+body.m .grid2{grid-template-columns:1fr}
+body.m input[type=text],body.m input[type=number],body.m select{font-size:16px}
+body.m input[type=range]{height:28px}
+body.m #toasts{top:calc(env(safe-area-inset-top) + var(--toph,90px) + 40px);width:92vw}
+body.m .toast{font-size:12px;text-align:center;padding:6px 10px}
+body.m #toasts{z-index:15}
+body.m #start .win{padding:16px;margin:calc(env(safe-area-inset-top) + 8px) 8px calc(env(safe-area-inset-bottom) + 20px)}
+body.m #start h1{font-size:22px}
+body.m .opts button{min-width:44%}
+body.m #rivals{grid-template-columns:1fr 1fr;max-height:none}
+body.m .tabs{overflow-x:auto;flex-wrap:nowrap}
+body.m .tabs button{flex:none}
+.lg{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;vertical-align:middle;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.4);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);flex:none}
+.badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#f43f5e;color:#fff;font-size:11px;line-height:17px;font-weight:700}
+.ib{display:flex;gap:10px;padding:8px;border-bottom:1px solid var(--bd);cursor:pointer}.ib.u{background:rgba(56,189,248,.07)}.ib .ic{font-size:20px}
+.dec{border-color:rgba(251,191,36,.6)!important}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="top" class="panel">
+  <div class="stat"><span id="cname">公司</span><b id="s-cash">¥0</b></div>
+  <div class="stat"><span>净资产</span><b id="s-nw">¥0</b></div>
+  <div class="stat"><span>本月利润</span><b id="s-pf">¥0</b></div>
+  <div class="stat"><span>日期</span><b id="s-date">-</b></div>
+  <div class="stat" id="s-macro" data-w="macro" style="cursor:pointer"><span id="s-rate">利率 4.50%</span><b id="s-mev">🌍</b></div>
+  <div class="grp spd" id="spd"><button data-s="0" title="暂停 (空格)">⏸</button><button data-s="1">▶</button><button data-s="2">⏩</button><button data-s="3">⏭</button></div>
+  <div id="menu">
+  <div class="grp" id="cities"></div>
+  <div class="sep"></div>
+  <button data-w="macro">🌍 宏观</button>
+  <button data-w="market">📊 市场</button>
+  <button data-w="re">🏠 地产</button>
+  <button data-w="net">🌐 互联网</button>
+  <button data-w="inbox" id="btn-inbox" style="position:relative">🔔 通知<span id="ibadge" class="badge hidden">0</span></button>
+  <button data-w="dash">📊 看板</button>
+  <button data-w="report">📋 月报</button>
+  <button data-w="war">⚔️ 商战</button>
+  <button data-w="hr">👔 人才</button>
+  <button data-w="finance">💼 财务</button>
+  <button data-w="research">🔬 研发</button>
+  <button data-w="stock">📈 股市</button>
+  <button data-w="rank">🏆 排行</button>
+  <button data-w="settings" title="设置：存档读档、画质">⚙️ 设置</button>
+  <button data-w="help">❔</button>
+  <button id="btn-save" title="存档 / 读档">💾 存档</button>
+  </div>
+</div>
+
+<div id="build" class="panel"><div class="mob row" style="padding:0 2px 6px"><b>🏗️ 建造</b><button onclick="toggleBuild(false)">收起 ▾</button></div><div id="btabs"></div><div id="blist" style="display:flex;flex-direction:column;gap:5px"></div><div class="mu" style="font-size:11px;margin-top:3px;line-height:1.5">Shift 连续建造 · Esc 取消</div></div>
+<div id="goal" class="panel"></div>
+<button id="fab" onclick="toggleBuild()">🏗️</button>
+<div id="bconf" class="panel hidden"><div id="bconf-t" style="flex:1"></div><button class="pri" id="bconf-ok">确认建造</button><button id="bconf-no">取消</button></div>
+<div id="side" class="panel hidden"></div>
+<div id="ticker" class="panel"><span class="lab">📰 快讯</span><span id="news">欢迎来到资本帝国实验室。</span></div>
+<div id="heat" class="panel"><span class="mu" style="padding:0 4px">热力图</span><button data-h="0" class="on">关</button><button data-h="1">人口</button><button data-h="2">地价</button></div>
+<canvas id="mini" class="panel" width="160" height="90"></canvas>
+<div id="tip" class="hidden"></div>
+<div id="modal" class="hidden"><div class="win panel"><div class="win-h"><span id="mt"></span><button id="mx">✕</button></div><div id="mb"></div></div></div>
+<div id="toasts"></div>
+
+<div id="start">
+  <div class="win panel">
+    <h1>资本帝国实验室</h1>
+    <div class="mu" style="margin-bottom:14px">1990 年，四座城市，最多 15 位风格迥异的创业者与你同台竞争。零售、实业、科技、互联网、房地产——选择你的起家之路。</div>
+    <div class="grid2">
+      <div><div class="mu">公司名称</div><input type="text" id="in-name" value="" placeholder="输入公司名（留空随机）" style="width:100%;margin:5px 0 10px"></div>
+      <div><div class="mu">创始人（你）</div><input type="text" id="in-founder" value="" placeholder="输入你的名字（留空随机）" style="width:100%;margin:5px 0 10px"></div>
+    </div>
+    <div class="mu">游戏模式 / 剧本</div><div class="opts" id="scn"></div><div id="scnd" class="mu" style="font-size:12px;margin:-6px 0 10px"></div>
+    <div class="mu">起家方式（免费开局资产）</div><div class="opts" id="pkg"></div>
+    <div class="mu">创始人天赋</div><div class="opts" id="perk"></div>
+    <div class="mu">竞争对手（<span id="pickn"></span>）</div><div id="rivals"></div><div id="renbox" class="card hidden"></div>
+    <div class="mu">起家城市</div><div class="opts" id="scity"></div>
+    <div class="mu">宏观环境（游戏中可在「🌍 宏观」里细调每种事件概率）</div><div class="opts" id="macroopt"></div>
+    <div class="mu">对手能力</div><div class="opts" id="aiopt"></div>
+    <div class="mu">难度（初始资金） · 所有公司都受「规模不经济」影响：超过 10 栋建筑后，每多 10 栋运营成本约 +3%，60 栋以上加速上升</div>
+    <div class="opts" id="diff"><button data-d="0">轻松 ¥500万</button><button data-d="1" class="on">标准 ¥300万</button><button data-d="2">困难 ¥150万</button></div>
+    <div style="display:flex;gap:8px">
+      <button class="pri" id="btn-new" style="flex:1;padding:10px">开始新游戏</button>
+      <button id="btn-load" style="flex:1;padding:10px">继续上次</button>
+      <button id="btn-slots" style="flex:1;padding:10px">📂 读取存档</button>
+    </div>
+    <div class="mu" style="margin-top:12px;font-size:11px">拖动平移 · 滚轮缩放 · 空格暂停 · 1/2/3 调速 · ⚙️ 可切换画质（电脑卡就选「流畅」）</div>
+  </div>
+</div>
+
+<script>/*@@SCRIPT@@*/</script>
+</body>
+</html>

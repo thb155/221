@@ -1,0 +1,75 @@
+// 资本帝国实验室 · 浏览器内自动化测试
+// 由 `node build.js --test` 注入到 dist/自检.html；用任何浏览器打开即自动运行。
+(function () {
+  const results = [];
+  const T = (name, fn) => {
+    const t0 = performance.now();
+    try { const r = fn(); results.push({ name, ok: r !== false, ms: performance.now() - t0, msg: typeof r === 'string' ? r : '' }); }
+    catch (e) { results.push({ name, ok: false, ms: performance.now() - t0, msg: String(e && e.stack || e).slice(0, 300) }); }
+  };
+  const finite = v => typeof v === 'number' && isFinite(v);
+  const fresh = (extra) => { newGame(Object.assign({}, opt, { name: '测试集团', founder: '测试员' }, extra || {})); MM = macroMods(); };
+  const run = days => { for (let i = 0; i < days; i++) simDay(); };
+  const errs = [];
+  addEventListener('error', e => errs.push(String(e.message)));
+
+  setTimeout(() => {
+    try { localStorage.removeItem('cel-test-dummy'); } catch (e) {}
+    T('新游戏可以启动', () => { fresh(); boot(); return G && G.cos.length > 1 && G.cities.length === 4; });
+    T('模拟 5 年无异常', () => { run(365 * 5); return G.day >= 365 * 5; });
+    T('所有公司的现金/贷款/净资产都是有效数字', () => {
+      for (const c of G.cos) { if (c.dead) continue; if (!finite(c.cash) || !finite(c.loan) || !finite(netWorth(c))) return `${c.name} 出现 NaN`; } return true;
+    });
+    T('批发价格在合理区间（基准价 0.3~3.5 倍）', () => {
+      for (const p of PK) { const r = G.imp[p] / P[p].imp; if (!(r > 0.3 && r < 3.5)) return `${P[p].n} 价格倍数 ${r.toFixed(2)}`; } return true;
+    });
+    T('分城市库存与总库存一致', () => {
+      for (const c of G.cos) { if (c.dead) continue; for (const p of PK) { const s = [0, 1, 2, 3].reduce((x, ci) => x + c.ci[ci][p].q, 0); if (Math.abs(s - c.inv[p].q) > Math.max(5, s * 0.02)) return `${c.name} ${P[p].n}: 城市合计 ${s.toFixed(0)} ≠ 总 ${c.inv[p].q.toFixed(0)}`; } } return true;
+    });
+    T('互联网用户不超过人口上限', () => {
+      for (const k of NK) { const U = G.netU[k] || 0, tot = G.cos.reduce((x, c) => x + (c.dead ? 0 : c.users[k]), 0); if (tot > U * 1.05 + 10) return `${NET[k].n} 用户 ${tot.toFixed(0)} > 上限 ${U.toFixed(0)}`; } return true;
+    });
+    T('城市人口为正且不超过住房容量太多', () => {
+      for (const c of G.cities) { if (!(c.pop > 0)) return `${c.n} 人口异常`; if (c.cap && c.pop > c.cap * 1.3) return `${c.n} 人口 ${c.pop.toFixed(0)} 远超容量 ${c.cap.toFixed(0)}`; } return true;
+    });
+    T('持股 ≥30% 时对方无法制裁', () => {
+      fresh(); G.cos[0].cash += 3e8; for (let i = 0; i < 6; i++) trade(1, 5); closeModal();
+      const blocked = !startWar(1, 0, 2, null); return blocked || '对方仍能宣战';
+    });
+    T('持股 ≥51% 时控股并表、可指挥', () => {
+      for (let i = 0; i < 5; i++) trade(1, 5); closeModal(); buildWar();
+      if (ctrlOf(1) !== 0) return 'ctrlOf 未识别控股';
+      return startWar(1, 2, 1, 0) || '受控公司无法被命令开战';
+    });
+    T('存档序列化往返一致', () => {
+      run(30); const str = ser(), day = G.day, cash = G.cos[0].cash; applyLoaded(str);
+      return (G.day === day && Math.abs(G.cos[0].cash - cash) < 1) || '读档后数据不一致';
+    });
+    T('读档后继续模拟 1 年', () => { MM = null; run(365); return finite(G.cos[0].cash); });
+    for (const k of Object.keys(SCN)) T(`剧本「${SCN[k].n}」可启动并运行 1 年`, () => { fresh({ scn: k }); run(365); return finite(netWorth(G.cos[0])); });
+    T('规模不经济：建筑越多管理成本系数越高', () => { const c={_nb:5};const a=scaleF(c);c._nb=40;const b=scaleF(c);c._nb=100;const d=scaleF(c);return (a===1&&b>1&&d>b)||`${a} ${b} ${d}`; });
+    T('对手能力：困难档对手比简单档更强', () => {
+      const sz=()=>G.b.filter(b=>b.o!==0).length+G.cos.reduce((x,c)=>x+(c.ai&&!c.dead?PK.reduce((y,p)=>y+c.tech[p],0):0),0);
+      fresh({ai:0});run(365*3);const e=sz();fresh({ai:2});run(365*3);const h=sz();return h>e||`简单 ${e} vs 困难 ${h}`;
+    });
+    T('所有窗口都能打开', () => {
+      fresh(); run(400);
+      const ws = ['market', 're', 'net', 'finance', 'research', 'stock', 'rank', 'macro', 'hr', 'war', 'inbox', 'report', 'dash', 'settings', 'help'];
+      for (const w of ws) openWin(w);
+      for (const t of ['is', 'bs', 'cf', 'sub', 'chart']) { finTab = t; openWin('finance'); }
+      closeModal(); return true;
+    });
+    T('渲染一帧', () => { for (const q of [0, 1, 2]) { Q = q; resize(); rebuildCache(); render(); } Q = 1; resize(); return true; });
+    T('运行期间没有未捕获错误', () => errs.length ? errs.slice(0, 3).join(' | ') : true);
+
+    const pass = results.filter(r => r.ok).length;
+    window.__TEST_RESULT = { pass, total: results.length, results };
+    setSpeed(0);
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;inset:0;z-index:99;background:rgba(2,6,23,.92);color:#e2e8f0;overflow:auto;padding:24px;font:14px/1.6 system-ui,"PingFang SC","Microsoft YaHei"';
+    box.innerHTML = `<h2 style="margin:0 0 8px">${pass === results.length ? '✅' : '❌'} 自检结果：${pass} / ${results.length} 通过</h2>
+      <div style="color:#94a3b8;margin-bottom:12px">关闭此页面即可；正式游戏请打开 资本帝国实验室.html</div>` +
+      results.map(r => `<div style="padding:6px 10px;margin:4px 0;border-radius:8px;background:${r.ok ? 'rgba(34,197,94,.12)' : 'rgba(244,63,94,.18)'}">${r.ok ? '✅' : '❌'} ${r.name} <span style="color:#94a3b8">(${r.ms.toFixed(0)} ms)</span>${r.msg ? `<div style="color:#fda4af;font-size:12px;white-space:pre-wrap">${r.msg}</div>` : ''}</div>`).join('');
+    document.body.appendChild(box);
+  }, 300);
+})();
