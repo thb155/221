@@ -15,7 +15,7 @@
 
   setTimeout(() => {
     try { localStorage.removeItem('cel-test-dummy'); } catch (e) {}
-    T('新游戏可以启动', () => { fresh(); boot(); return G && G.cos.length > 1 && G.cities.length === 4; });
+    T('新游戏可以启动', () => { fresh(); boot(); return G && G.cos.length > 1 && G.cities.length === CITY_DEF.length; });
     T('模拟 5 年无异常', () => { run(365 * 5); return G.day >= 365 * 5; });
     T('所有公司的现金/贷款/净资产都是有效数字', () => {
       for (const c of G.cos) { if (c.dead) continue; if (!finite(c.cash) || !finite(c.loan) || !finite(netWorth(c))) return `${c.name} 出现 NaN`; } return true;
@@ -47,6 +47,12 @@
     });
     T('读档后继续模拟 1 年', () => { MM = null; run(365); return finite(G.cos[0].cash); });
     for (const k of Object.keys(SCN)) T(`剧本「${SCN[k].n}」可启动并运行 1 年`, () => { fresh({ scn: k }); run(365); return finite(netWorth(G.cos[0])); });
+    T('六座城市都在正常运转', () => { if(G.cities.length!==6)return '城市数 '+G.cities.length; for(const c of G.cities){if(!(c.pop>1000))return c.n+' 人口异常'} return true; });
+    T('跨城距离表覆盖全部城市', () => { for(let a=0;a<6;a++)for(let b=0;b<6;b++){if(!(KM[a][b]>=0)||KM[a][b]!==KM[b][a])return `KM[${a}][${b}]`} return true; });
+    T('旧版 4 城存档仍可读取并运行', () => {
+      fresh();const g=JSON.parse(ser());g.cities=g.cities.slice(0,4);g.cur=0;g.b=g.b.filter(b=>b.c<4);g.auctions=g.auctions.filter(a=>a.c<4);g.cos.forEach(c=>{c.ci=c.ci.slice(0,4);if(c.home>3)c.home=0});
+      applyLoaded(JSON.stringify(g));MM=null;run(200);return G.cities.length===4&&finite(G.cos[0].cash);
+    });
     T('规模不经济：建筑越多管理成本系数越高', () => { const c={_nb:5};const a=scaleF(c);c._nb=40;const b=scaleF(c);c._nb=100;const d=scaleF(c);return (a===1&&b>1&&d>b)||`${a} ${b} ${d}`; });
     T('对手能力：困难档对手比简单档更强', () => {
       const sz=()=>G.b.filter(b=>b.o!==0).length+G.cos.reduce((x,c)=>x+(c.ai&&!c.dead?PK.reduce((y,p)=>y+c.tech[p],0):0),0);

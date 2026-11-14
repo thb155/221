@@ -7,16 +7,18 @@ function blankM(){return{rev:0,net:0,rent:0,dep:0,whole:0,purch:0,op:0,sal:0,log
 function newCompany(id,def,cash,ai){
   const c={id,name:def.n,founder:def.f,av:def.av||'😎',col:def.col,style:def,sk:def.k,cash,ai,loan:0,inv:{},brand:{},tech:{},rp:{},ad:{},monet:{},users:{},m:blankM(),months:[],nwHist:[],sent:1,dead:false,negDays:0,autoImport:true,maxStock:3000,acquired:0,perk:def.perk||null,home:def.home||0,ph:[]};
   ALLK.forEach(p=>{c.brand[p]=ai?5+rnd()*10:0;c.tech[p]=0;c.rp[p]=0;c.ad[p]=0;c.monet[p]=1;c.users[p]=0});
-  PK.forEach(p=>c.inv[p]={q:0,ql:50});c.ci=[0,1,2,3].map(()=>{const o={};PK.forEach(p=>o[p]={q:0,ql:50});return o});return c}
+  PK.forEach(p=>c.inv[p]={q:0,ql:50});c.ci=CITY_DEF.map(()=>{const o={};PK.forEach(p=>o[p]={q:0,ql:50});return o});return c}
 function genCity(def,ci){
   const N=W*H,t=new Array(N).fill(0),tree=new Array(N).fill(0),house=new Array(N).fill(null),I=(x,y)=>y*W+x;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){let w=0;
     if(def.map==='river'){const rx=Math.round(13+Math.sin(y/8)*4+y*0.15),d=Math.abs(x-rx);w=d<=1?1:d===2?4:0}
     else if(def.map==='coastE'){const e=W-9+Math.round(Math.sin(y/5)*1.5);w=x>e?1:x===e?4:0}
+    else if(def.map==='delta'){const rx=Math.round(W*0.62+Math.sin(y/9)*3),d=Math.abs(x-rx),ry=Math.round(H*0.7+Math.sin(x/7)*2),d2=x<rx?Math.abs(y-ry):99;w=(d<=1||(d2<=0&&x>4))?1:(d===2||d2===1&&x>4)?4:0}
+    else if(def.map==='lake'){const d=Math.hypot((x-W*0.3)/1.2,y-H*0.32);w=d<6?1:d<7?4:0}
     else if(def.map==='coastS'){const e=H-9+Math.round(Math.sin(x/5)*1.5);w=y>e?1:y===e?4:0}
     else{const d=Math.hypot(x-13,y-48);w=d<5?1:d<6?4:0}
     t[I(x,y)]=w}
-  for(let y=2;y<H-2;y++)for(let x=2;x<W-2;x++)if(x%7===3||y%7===3){const i=I(x,y);if(t[i]===1){if(def.map==='river')t[i]=5}else t[i]=2}
+  for(let y=2;y<H-2;y++)for(let x=2;x<W-2;x++)if(x%7===3||y%7===3){const i=I(x,y);if(t[i]===1){if(def.map==='river'||def.map==='delta')t[i]=5}else t[i]=2}
   const centers=[[W/2,H/2,def.r,1],[W*0.24,H*0.74,1.2,0.3],[W*0.76,H*0.24,1.2,0.3]];
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=I(x,y);if(t[i]!==0)continue;
     const nearRoad=[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>{const xx=x+a,yy=y+b;return xx>=0&&yy>=0&&xx<W&&yy<H&&t[I(xx,yy)]===2});
@@ -53,7 +55,7 @@ function newGame(o){const sc=SCN[o.scn||'free']||SCN.free;if(sc.home!=null)o.hom
   const me=newCompany(0,{n:o.name,f:o.founder,av:'😎',col:PLAYER_COL,perk:o.perk,home:o.home},sc.cash??([5e6,3e6,1.5e6][o.diff]+(o.pkg==='cash'?8e5:0)),false);
   G.cos.push(me);giveStart(me,sc.pkg?PKG_EXTRA[sc.pkg]:PKGS[o.pkg].b,o.home);if(sc.loan)me.loan=sc.loan;if(sc.pkg==='soe')G.b.forEach(b=>{if(b.o===0){b.lv=2;b.dep=0.5}});
   if(sc.year&&sc.year>1990){G.qm=50+(sc.year-1990)*365*0.008;G.cities.forEach(c=>{const yrs=sc.year-1990;c.pop*=Math.pow(1+c.g,yrs*365*0.6);growCity(c,Math.round(yrs*4))});AI_DEF.length;}
-  o.picks.map(k=>AI_DEF.find(a=>a.k===k)).forEach((a,i)=>{const c=newCompany(i+1,a,(2.2e6+rnd()*1e6)*AIK[o.ai??1].cash,true);const rn=(o.rename||{})[a.k];if(rn){if(rn.n)c.name=rn.n.slice(0,12);if(rn.f)c.founder=rn.f.slice(0,10)}c.home=(o.home+1+i)%4;G.cos.push(c);giveStart(c,a.start,c.home)});
+  o.picks.map(k=>AI_DEF.find(a=>a.k===k)).forEach((a,i)=>{const c=newCompany(i+1,a,(2.2e6+rnd()*1e6)*AIK[o.ai??1].cash,true);const rn=(o.rename||{})[a.k];if(rn){if(rn.n)c.name=rn.n.slice(0,12);if(rn.f)c.founder=rn.f.slice(0,10)}c.home=(o.home+1+i)%CITY_DEF.length;G.cos.push(c);giveStart(c,a.start,c.home)});
   macroInit(o.macro);MM=macroMods();G.wars=[];G.own={};G.ownCost={};G.rel={};G.pacts=[];G.rep=60;G.inbox=[];G.pend=[];G.buff={};me.ex={};me.wage=1;me.b2b=true;me.b2bk=0.95;refreshTalent(true);me.m.cash0=me.cash;me.m.loan0=0;
   makeAuctions();
   addNews(`${o.founder} 创立 ${o.name}，总部设在${G.cities[o.home].n}。`);

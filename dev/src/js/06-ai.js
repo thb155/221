@@ -29,7 +29,7 @@ function aiMonth(c){
   const yr=yearNow(),acts=['retail','fac','chain','lab','net','re'],w=st.w.slice();
   if(!NK.some(k=>yr>=NET[k].year))w[4]=0;
   let tot=w.reduce((a,b)=>a+b,0),r=rnd()*tot,act='retail';for(let i=0;i<6;i++){r-=w[i];if(r<=0){act=acts[i];break}}
-  const ci=rnd()<0.5?c.home:Math.floor(rnd()*4),city=G.cities[ci];
+  const ci=rnd()<0.5?c.home:Math.floor(rnd()*G.cities.length),city=G.cities[ci];
   if(act==='retail'){const t=st.retail||(c.cash>4e6&&rnd()<0.3?'market':rnd()<0.25?'mini':'store');if(aiBuild(c,t,ci,true))addNews(`${BT[t].ic} ${c.name}在${city.n}新开${BT[t].n}`)}
   else if(act==='fac'){const mk=makes(c);const cand=[...new Set([...(st.pref||[]),...sellsOf(c)])].filter(p=>!mk.has(p)||rnd()<0.25);
     const ok=cand.filter(p=>!P[p].tech||c.tech[p]>=P[p].tech);const p=ok.length?pick(ok):null;

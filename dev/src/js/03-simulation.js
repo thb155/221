@@ -1,6 +1,7 @@
 /* ================= 模拟 ================= */
 function addInv(c,p,q,ql,ci){if(q<=0)return;const v=c.inv[p];v.ql=(v.q*v.ql+q*ql)/(v.q+q);v.q+=q;ci=ci??(c.home||0);const cv=c.ci[ci][p];cv.ql=(cv.q*cv.ql+q*ql)/(cv.q+q);cv.q+=q}
-const KM=[[0,1200,1400,1900],[1200,0,2100,1800],[1400,2100,0,1700],[1900,1800,1700,0]];
+const KM=[[0,1200,1400,1900,1400,180],[1200,0,2100,1800,2100,1300],[1400,2100,0,1700,140,1300],[1900,1800,1700,0,1600,1900],[1400,2100,140,1600,0,1300],[180,1300,1300,1900,1300,0]];
+const CIDX=()=>G.cities.map((_,i)=>i);
 let LOG={org:{},wh:{}};
 function buildLogi(){const org={},wh={};for(const b of G.b){if(b.type==='wh'){((wh[b.o]=wh[b.o]||{})[b.c]=wh[b.o][b.c]||[]).push(b)}
   else if(b.prod&&P[b.prod]&&(b.type==='factory'||b.type==='farm'||b.type==='mine'||b.type==='forest')){((org[b.o]=org[b.o]||{})[b.prod]=org[b.o][b.prod]||[]).push(b)}}LOG={org,wh}}
@@ -9,12 +10,12 @@ const hasWh=(c,ci)=>!!(LOG.wh[c.id]&&LOG.wh[c.id][ci]&&LOG.wh[c.id][ci].length);
 const interFr=(c,v,from,to)=>from===to?0:v*(0.03+KM[from][to]/1000*0.025)*(hasWh(c,to)?0.5:1);
 function lastMile(c,p,dst){const v=G.imp[p],pts=((LOG.org[c.id]&&LOG.org[c.id][p])||[]).filter(x=>x.c===dst.c).concat((LOG.wh[c.id]&&LOG.wh[c.id][dst.c])||[]);
   if(!pts.length)return v*0.02;let d=1e9;for(const x of pts)if(x!==dst)d=Math.min(d,tileD(x,dst));if(d>=1e9)d=0;return v*Math.min(0.04,0.0015*d)}
-const cityOrder=dc=>[dc,...[0,1,2,3].filter(x=>x!==dc).sort((x,y)=>KM[x][dc]-KM[y][dc])];
+const cityOrder=dc=>[dc,...CIDX().filter(x=>x!==dc).sort((x,y)=>KM[x][dc]-KM[y][dc])];
 function frUnit(c,p,dst){if(!dst)return 0;const v=G.imp[p],lm=lastMile(c,p,dst);for(const ci of cityOrder(dst.c))if(c.ci[ci][p].q>1)return lm+interFr(c,v,ci,dst.c);return lm}
 const whCapCity=(c,ci)=>((LOG.wh[c.id]&&LOG.wh[c.id][ci])||[]).reduce((s2,b)=>s2+3000*lvMul(b.lv),0);
 const whCap=c=>(LOG.wh[c.id]?Object.values(LOG.wh[c.id]).flat():[]).reduce((s2,b)=>s2+3000*lvMul(b.lv),0);
 const capCity=(c,ci)=>Math.min(c.maxStock,1000+whCapCity(c,ci));
-const stockCap=c=>[0,1,2,3].reduce((s2,ci)=>s2+capCity(c,ci),0);
+const stockCap=c=>CIDX().reduce((s2,ci)=>s2+capCity(c,ci),0);
 function cityTake(c,p,ci,n){const cv=c.ci[ci][p],g=Math.min(cv.q,n);if(g<=0)return 0;cv.q-=g;const v=c.inv[p];v.q=Math.max(0,v.q-g);return g}
 function take(c,p,need,b){const dc=b?b.c:(c.home||0),val=G.imp[p];let got=0,qs=0,src=-1,best=0,fr=0;const lm=b?lastMile(c,p,b):0;
   for(const ci of cityOrder(dc)){if(got>=need)break;const cv=c.ci[ci][p];if(cv.q<=0)continue;const ql=cv.ql,g=cityTake(c,p,ci,need-got);got+=g;qs+=g*ql;fr+=g*(lm+interFr(c,val,ci,dc))}
@@ -80,7 +81,7 @@ function simDay(){
   if(G.shock)for(const p in G.shock){G.shock[p]=1+(G.shock[p]-1)*0.985}
   for(const b of G.b)if(isRetail(b)){const r=storeRev[b.id]||0;b.out=r;b.hist.push(r);if(b.hist.length>60)b.hist.shift();if(r>0&&b.o===0&&b.c===G.cur&&Q>0&&rnd()<0.3&&sfx('coin')!==1)floats.push({x:b.x+1,y:b.y+1,t:'+'+fmt(r),life:1})}
   // 互联网
-  const yr=yearNow(),totPop=G.cities.reduce((s,c)=>s+c.pop,0);
+  const yr=yearNow(),totPop=G.cities.reduce((s,c)=>s+c.pop*((CITY_DEF[c.id]||{}).net||1),0);
   G.adopt=yr<1993?0:clamp(Math.pow(clamp((yr-1993)/22,0,1),1.4)+MM.adopt,0,1);
   for(const k of NK){const U=yr>=NET[k].year?totPop*NET[k].pen*G.adopt:0;G.netU[k]=U;
     const list=alive.filter(c=>c.tech[k]>=1);let sum=0;const A={};
@@ -93,7 +94,7 @@ function simDay(){
   for(const c of alive){
     for(const p of FINAL.concat(NK)){c.brand[p]*=0.996;if(c.ad[p]>0){const a=c.ad[p];c.cash-=a;c.m.ad+=a;c.brand[p]=Math.min(100,c.brand[p]+Math.sqrt(a)/90*(1+0.8*exS(c,'cmo')))}}
     const srv=usersOf(c)*0.02;c.cash-=srv;c.m.op+=srv;if(c.id===0&&srv>0){const ds=G.b.filter(x=>x.o===0&&x.type==='dc');ds.forEach(x=>segAcc(x,'op',srv/ds.length))}
-    for(let ci=0;ci<4;ci++){const cap=capCity(c,ci);for(const p of PK){const cv=c.ci[ci][p];if(cv.q>cap){const ex=cv.q-cap,r=ex*G.imp[p]*0.8;cv.q=cap;c.inv[p].q=Math.max(0,c.inv[p].q-ex);c.cash+=r;c.m.whole+=r}}}
+    for(let ci=0;ci<G.cities.length;ci++){const cap=capCity(c,ci);for(const p of PK){const cv=c.ci[ci][p];if(cv.q>cap){const ex=cv.q-cap,r=ex*G.imp[p]*0.8;cv.q=cap;c.inv[p].q=Math.max(0,c.inv[p].q-ex);c.cash+=r;c.m.whole+=r}}}
     if(c.loan>0){const i=c.loan*loanRate(c)/365;c.cash-=i;c.m.int+=i}if(c.cash>0){const dp=c.cash*depRate(c)/365;c.cash+=dp;c.m.dep+=dp}
     if(c.ai&&c.cash<0){c.loan+=-c.cash+300000;c.cash=300000}
   }

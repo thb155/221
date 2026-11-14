@@ -200,7 +200,7 @@ body.m .tabs button{flex:none}
 <div id="start">
   <div class="win panel">
     <h1>资本帝国实验室</h1>
-    <div class="mu" style="margin-bottom:14px">1990 年，四座城市，最多 15 位风格迥异的创业者与你同台竞争。零售、实业、科技、互联网、房地产——选择你的起家之路。</div>
+    <div class="mu" style="margin-bottom:14px">1990 年，六座城市，最多 15 位风格迥异的创业者与你同台竞争。零售、实业、科技、互联网、房地产——选择你的起家之路。</div>
     <div class="grid2">
       <div><div class="mu">公司名称</div><input type="text" id="in-name" autocomplete="off" value="" placeholder="输入公司名（留空随机）" style="width:100%;margin:5px 0 10px"></div>
       <div><div class="mu">创始人（你）</div><input type="text" id="in-founder" autocomplete="off" value="" placeholder="输入你的名字（留空随机）" style="width:100%;margin:5px 0 10px"></div>
@@ -301,6 +301,8 @@ const CITY_DEF=[
  {n:'北京',r:4,land:1.4,g:0.0001,map:'plain',tag:'大城市',seg:[0.32,0.36,0.32]},
  {n:'深圳',r:2.2,land:1.1,g:0.00026,map:'coastS',tag:'小渔村·发展极快',seg:[0.45,0.28,0.27]},
  {n:'成都',r:3,land:0.8,g:0.00014,map:'river',tag:'中等城市',seg:[0.55,0.25,0.2]},
+ {n:'广州',r:3.6,land:1.2,g:0.00016,map:'delta',tag:'商贸大城·批发集散',seg:[0.42,0.3,0.28]},
+ {n:'杭州',r:2.6,land:1.0,g:0.0002,map:'lake',tag:'西湖之城·电商之都',seg:[0.36,0.32,0.32],net:1.3},
 ];
 // 虚构创业者：start=开局资产，w=扩张偏好（零售/工厂/产业链/研发/互联网/地产）
 const AI_DEF=[
@@ -459,16 +461,18 @@ function blankM(){return{rev:0,net:0,rent:0,dep:0,whole:0,purch:0,op:0,sal:0,log
 function newCompany(id,def,cash,ai){
   const c={id,name:def.n,founder:def.f,av:def.av||'😎',col:def.col,style:def,sk:def.k,cash,ai,loan:0,inv:{},brand:{},tech:{},rp:{},ad:{},monet:{},users:{},m:blankM(),months:[],nwHist:[],sent:1,dead:false,negDays:0,autoImport:true,maxStock:3000,acquired:0,perk:def.perk||null,home:def.home||0,ph:[]};
   ALLK.forEach(p=>{c.brand[p]=ai?5+rnd()*10:0;c.tech[p]=0;c.rp[p]=0;c.ad[p]=0;c.monet[p]=1;c.users[p]=0});
-  PK.forEach(p=>c.inv[p]={q:0,ql:50});c.ci=[0,1,2,3].map(()=>{const o={};PK.forEach(p=>o[p]={q:0,ql:50});return o});return c}
+  PK.forEach(p=>c.inv[p]={q:0,ql:50});c.ci=CITY_DEF.map(()=>{const o={};PK.forEach(p=>o[p]={q:0,ql:50});return o});return c}
 function genCity(def,ci){
   const N=W*H,t=new Array(N).fill(0),tree=new Array(N).fill(0),house=new Array(N).fill(null),I=(x,y)=>y*W+x;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){let w=0;
     if(def.map==='river'){const rx=Math.round(13+Math.sin(y/8)*4+y*0.15),d=Math.abs(x-rx);w=d<=1?1:d===2?4:0}
     else if(def.map==='coastE'){const e=W-9+Math.round(Math.sin(y/5)*1.5);w=x>e?1:x===e?4:0}
+    else if(def.map==='delta'){const rx=Math.round(W*0.62+Math.sin(y/9)*3),d=Math.abs(x-rx),ry=Math.round(H*0.7+Math.sin(x/7)*2),d2=x<rx?Math.abs(y-ry):99;w=(d<=1||(d2<=0&&x>4))?1:(d===2||d2===1&&x>4)?4:0}
+    else if(def.map==='lake'){const d=Math.hypot((x-W*0.3)/1.2,y-H*0.32);w=d<6?1:d<7?4:0}
     else if(def.map==='coastS'){const e=H-9+Math.round(Math.sin(x/5)*1.5);w=y>e?1:y===e?4:0}
     else{const d=Math.hypot(x-13,y-48);w=d<5?1:d<6?4:0}
     t[I(x,y)]=w}
-  for(let y=2;y<H-2;y++)for(let x=2;x<W-2;x++)if(x%7===3||y%7===3){const i=I(x,y);if(t[i]===1){if(def.map==='river')t[i]=5}else t[i]=2}
+  for(let y=2;y<H-2;y++)for(let x=2;x<W-2;x++)if(x%7===3||y%7===3){const i=I(x,y);if(t[i]===1){if(def.map==='river'||def.map==='delta')t[i]=5}else t[i]=2}
   const centers=[[W/2,H/2,def.r,1],[W*0.24,H*0.74,1.2,0.3],[W*0.76,H*0.24,1.2,0.3]];
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=I(x,y);if(t[i]!==0)continue;
     const nearRoad=[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>{const xx=x+a,yy=y+b;return xx>=0&&yy>=0&&xx<W&&yy<H&&t[I(xx,yy)]===2});
@@ -505,7 +509,7 @@ function newGame(o){const sc=SCN[o.scn||'free']||SCN.free;if(sc.home!=null)o.hom
   const me=newCompany(0,{n:o.name,f:o.founder,av:'😎',col:PLAYER_COL,perk:o.perk,home:o.home},sc.cash??([5e6,3e6,1.5e6][o.diff]+(o.pkg==='cash'?8e5:0)),false);
   G.cos.push(me);giveStart(me,sc.pkg?PKG_EXTRA[sc.pkg]:PKGS[o.pkg].b,o.home);if(sc.loan)me.loan=sc.loan;if(sc.pkg==='soe')G.b.forEach(b=>{if(b.o===0){b.lv=2;b.dep=0.5}});
   if(sc.year&&sc.year>1990){G.qm=50+(sc.year-1990)*365*0.008;G.cities.forEach(c=>{const yrs=sc.year-1990;c.pop*=Math.pow(1+c.g,yrs*365*0.6);growCity(c,Math.round(yrs*4))});AI_DEF.length;}
-  o.picks.map(k=>AI_DEF.find(a=>a.k===k)).forEach((a,i)=>{const c=newCompany(i+1,a,(2.2e6+rnd()*1e6)*AIK[o.ai??1].cash,true);const rn=(o.rename||{})[a.k];if(rn){if(rn.n)c.name=rn.n.slice(0,12);if(rn.f)c.founder=rn.f.slice(0,10)}c.home=(o.home+1+i)%4;G.cos.push(c);giveStart(c,a.start,c.home)});
+  o.picks.map(k=>AI_DEF.find(a=>a.k===k)).forEach((a,i)=>{const c=newCompany(i+1,a,(2.2e6+rnd()*1e6)*AIK[o.ai??1].cash,true);const rn=(o.rename||{})[a.k];if(rn){if(rn.n)c.name=rn.n.slice(0,12);if(rn.f)c.founder=rn.f.slice(0,10)}c.home=(o.home+1+i)%CITY_DEF.length;G.cos.push(c);giveStart(c,a.start,c.home)});
   macroInit(o.macro);MM=macroMods();G.wars=[];G.own={};G.ownCost={};G.rel={};G.pacts=[];G.rep=60;G.inbox=[];G.pend=[];G.buff={};me.ex={};me.wage=1;me.b2b=true;me.b2bk=0.95;refreshTalent(true);me.m.cash0=me.cash;me.m.loan0=0;
   makeAuctions();
   addNews(`${o.founder} 创立 ${o.name}，总部设在${G.cities[o.home].n}。`);
@@ -573,11 +577,12 @@ const capOf=c=>G.b.reduce((s,b)=>s+(b.o===c.id&&b.type==='dc'?50000*lvMul(b.lv):
 const usersOf=c=>NK.reduce((s,k)=>s+c.users[k],0);
 const yearNow=()=>{const d=new Date(G.date);return d.getUTCFullYear()+d.getUTCMonth()/12};
 function makeAuctions(){G.auctions=G.auctions.filter(a=>a.exp>G.day&&lotOk(G.cities[a.c],a.x,a.y));
-  while(G.auctions.length<4){const ci=Math.floor(rnd()*4),city=G.cities[ci],lot=findLot(city,rnd()<0.6);if(!lot)break;G.auctions.push({c:ci,x:lot.x,y:lot.y,k:0.7+rnd()*0.45,exp:G.day+60+Math.floor(rnd()*60)})}}
+  while(G.auctions.length<Math.max(4,G.cities.length)){const ci=Math.floor(rnd()*G.cities.length),city=G.cities[ci],lot=findLot(city,rnd()<0.6);if(!lot)break;G.auctions.push({c:ci,x:lot.x,y:lot.y,k:0.7+rnd()*0.45,exp:G.day+60+Math.floor(rnd()*60)})}}
 
 /* ================= 模拟 ================= */
 function addInv(c,p,q,ql,ci){if(q<=0)return;const v=c.inv[p];v.ql=(v.q*v.ql+q*ql)/(v.q+q);v.q+=q;ci=ci??(c.home||0);const cv=c.ci[ci][p];cv.ql=(cv.q*cv.ql+q*ql)/(cv.q+q);cv.q+=q}
-const KM=[[0,1200,1400,1900],[1200,0,2100,1800],[1400,2100,0,1700],[1900,1800,1700,0]];
+const KM=[[0,1200,1400,1900,1400,180],[1200,0,2100,1800,2100,1300],[1400,2100,0,1700,140,1300],[1900,1800,1700,0,1600,1900],[1400,2100,140,1600,0,1300],[180,1300,1300,1900,1300,0]];
+const CIDX=()=>G.cities.map((_,i)=>i);
 let LOG={org:{},wh:{}};
 function buildLogi(){const org={},wh={};for(const b of G.b){if(b.type==='wh'){((wh[b.o]=wh[b.o]||{})[b.c]=wh[b.o][b.c]||[]).push(b)}
   else if(b.prod&&P[b.prod]&&(b.type==='factory'||b.type==='farm'||b.type==='mine'||b.type==='forest')){((org[b.o]=org[b.o]||{})[b.prod]=org[b.o][b.prod]||[]).push(b)}}LOG={org,wh}}
@@ -586,12 +591,12 @@ const hasWh=(c,ci)=>!!(LOG.wh[c.id]&&LOG.wh[c.id][ci]&&LOG.wh[c.id][ci].length);
 const interFr=(c,v,from,to)=>from===to?0:v*(0.03+KM[from][to]/1000*0.025)*(hasWh(c,to)?0.5:1);
 function lastMile(c,p,dst){const v=G.imp[p],pts=((LOG.org[c.id]&&LOG.org[c.id][p])||[]).filter(x=>x.c===dst.c).concat((LOG.wh[c.id]&&LOG.wh[c.id][dst.c])||[]);
   if(!pts.length)return v*0.02;let d=1e9;for(const x of pts)if(x!==dst)d=Math.min(d,tileD(x,dst));if(d>=1e9)d=0;return v*Math.min(0.04,0.0015*d)}
-const cityOrder=dc=>[dc,...[0,1,2,3].filter(x=>x!==dc).sort((x,y)=>KM[x][dc]-KM[y][dc])];
+const cityOrder=dc=>[dc,...CIDX().filter(x=>x!==dc).sort((x,y)=>KM[x][dc]-KM[y][dc])];
 function frUnit(c,p,dst){if(!dst)return 0;const v=G.imp[p],lm=lastMile(c,p,dst);for(const ci of cityOrder(dst.c))if(c.ci[ci][p].q>1)return lm+interFr(c,v,ci,dst.c);return lm}
 const whCapCity=(c,ci)=>((LOG.wh[c.id]&&LOG.wh[c.id][ci])||[]).reduce((s2,b)=>s2+3000*lvMul(b.lv),0);
 const whCap=c=>(LOG.wh[c.id]?Object.values(LOG.wh[c.id]).flat():[]).reduce((s2,b)=>s2+3000*lvMul(b.lv),0);
 const capCity=(c,ci)=>Math.min(c.maxStock,1000+whCapCity(c,ci));
-const stockCap=c=>[0,1,2,3].reduce((s2,ci)=>s2+capCity(c,ci),0);
+const stockCap=c=>CIDX().reduce((s2,ci)=>s2+capCity(c,ci),0);
 function cityTake(c,p,ci,n){const cv=c.ci[ci][p],g=Math.min(cv.q,n);if(g<=0)return 0;cv.q-=g;const v=c.inv[p];v.q=Math.max(0,v.q-g);return g}
 function take(c,p,need,b){const dc=b?b.c:(c.home||0),val=G.imp[p];let got=0,qs=0,src=-1,best=0,fr=0;const lm=b?lastMile(c,p,b):0;
   for(const ci of cityOrder(dc)){if(got>=need)break;const cv=c.ci[ci][p];if(cv.q<=0)continue;const ql=cv.ql,g=cityTake(c,p,ci,need-got);got+=g;qs+=g*ql;fr+=g*(lm+interFr(c,val,ci,dc))}
@@ -657,7 +662,7 @@ function simDay(){
   if(G.shock)for(const p in G.shock){G.shock[p]=1+(G.shock[p]-1)*0.985}
   for(const b of G.b)if(isRetail(b)){const r=storeRev[b.id]||0;b.out=r;b.hist.push(r);if(b.hist.length>60)b.hist.shift();if(r>0&&b.o===0&&b.c===G.cur&&Q>0&&rnd()<0.3&&sfx('coin')!==1)floats.push({x:b.x+1,y:b.y+1,t:'+'+fmt(r),life:1})}
   // 互联网
-  const yr=yearNow(),totPop=G.cities.reduce((s,c)=>s+c.pop,0);
+  const yr=yearNow(),totPop=G.cities.reduce((s,c)=>s+c.pop*((CITY_DEF[c.id]||{}).net||1),0);
   G.adopt=yr<1993?0:clamp(Math.pow(clamp((yr-1993)/22,0,1),1.4)+MM.adopt,0,1);
   for(const k of NK){const U=yr>=NET[k].year?totPop*NET[k].pen*G.adopt:0;G.netU[k]=U;
     const list=alive.filter(c=>c.tech[k]>=1);let sum=0;const A={};
@@ -670,7 +675,7 @@ function simDay(){
   for(const c of alive){
     for(const p of FINAL.concat(NK)){c.brand[p]*=0.996;if(c.ad[p]>0){const a=c.ad[p];c.cash-=a;c.m.ad+=a;c.brand[p]=Math.min(100,c.brand[p]+Math.sqrt(a)/90*(1+0.8*exS(c,'cmo')))}}
     const srv=usersOf(c)*0.02;c.cash-=srv;c.m.op+=srv;if(c.id===0&&srv>0){const ds=G.b.filter(x=>x.o===0&&x.type==='dc');ds.forEach(x=>segAcc(x,'op',srv/ds.length))}
-    for(let ci=0;ci<4;ci++){const cap=capCity(c,ci);for(const p of PK){const cv=c.ci[ci][p];if(cv.q>cap){const ex=cv.q-cap,r=ex*G.imp[p]*0.8;cv.q=cap;c.inv[p].q=Math.max(0,c.inv[p].q-ex);c.cash+=r;c.m.whole+=r}}}
+    for(let ci=0;ci<G.cities.length;ci++){const cap=capCity(c,ci);for(const p of PK){const cv=c.ci[ci][p];if(cv.q>cap){const ex=cv.q-cap,r=ex*G.imp[p]*0.8;cv.q=cap;c.inv[p].q=Math.max(0,c.inv[p].q-ex);c.cash+=r;c.m.whole+=r}}}
     if(c.loan>0){const i=c.loan*loanRate(c)/365;c.cash-=i;c.m.int+=i}if(c.cash>0){const dp=c.cash*depRate(c)/365;c.cash+=dp;c.m.dep+=dp}
     if(c.ai&&c.cash<0){c.loan+=-c.cash+300000;c.cash=300000}
   }
@@ -845,7 +850,7 @@ function aiMonth(c){
   const yr=yearNow(),acts=['retail','fac','chain','lab','net','re'],w=st.w.slice();
   if(!NK.some(k=>yr>=NET[k].year))w[4]=0;
   let tot=w.reduce((a,b)=>a+b,0),r=rnd()*tot,act='retail';for(let i=0;i<6;i++){r-=w[i];if(r<=0){act=acts[i];break}}
-  const ci=rnd()<0.5?c.home:Math.floor(rnd()*4),city=G.cities[ci];
+  const ci=rnd()<0.5?c.home:Math.floor(rnd()*G.cities.length),city=G.cities[ci];
   if(act==='retail'){const t=st.retail||(c.cash>4e6&&rnd()<0.3?'market':rnd()<0.25?'mini':'store');if(aiBuild(c,t,ci,true))addNews(`${BT[t].ic} ${c.name}在${city.n}新开${BT[t].n}`)}
   else if(act==='fac'){const mk=makes(c);const cand=[...new Set([...(st.pref||[]),...sellsOf(c)])].filter(p=>!mk.has(p)||rnd()<0.25);
     const ok=cand.filter(p=>!P[p].tech||c.tech[p]>=P[p].tech);const p=ok.length?pick(ok):null;
@@ -1266,9 +1271,9 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
     for(const p of FINAL){const s=city.sales[p]||{D:0,tot:0,n:0};let my=0,pw=0,pn=0;
       for(const b of G.b)if(isRetail(b)&&b.c===city.id)for(const sl of b.slots)if(sl.p===p){if(b.o===0)my+=sl.sold||0;pw+=(sl.sold||0)*sl.price;pn+=sl.sold||0}
       h+=`<tr><td>${P[p].ic} ${P[p].n}${P[p].tech?` <span class="tag">需Lv${P[p].tech}自产</span>`:''}</td><td>${fnum(s.D)}</td><td>${s.n}</td><td>${fnum(s.tot)}</td><td>${s.tot?(my/s.tot*100).toFixed(1):'0.0'}%</td><td>${pn?fmt(pw/pn):'-'}</td><td>${fmt(G.imp[p])}${chg(p)}</td><td>${fmt(refNow(p))}</td><td>${me.brand[p].toFixed(1)}</td><td><input type="number" min="0" step="500" value="${me.ad[p]}" style="width:78px" onchange="G.cos[0].ad['${p}']=Math.max(0,+this.value||0)"></td></tr>`}
-    h+=`</table><h4 style="margin:14px 0 6px">📦 原料与中间品行情（全国统一批发市场，价格由供需决定）</h4><table><tr><th>商品</th><th>类别</th><th>国内产量/日</th><th>国内需求/日</th><th>供需</th><th>批发价（▲▼=供需溢价）</th><th>我的库存（沪/京/深/蓉）</th><th>品质</th><th>配方 / 来源</th></tr>`;
-    for(const p of [...RAW,...MID]){const v=me.inv[p],sd=G.sd[p]||{s:0,d:0};h+=`<tr><td>${P[p].ic} ${P[p].n}</td><td>${{raw:'原料',mid:'中间品'}[P[p].cat]}</td><td>${fnum(sd.s)}</td><td>${fnum(sd.d)}</td><td>${sd.s>sd.d*1.1?'<span class="neg">过剩</span>':sd.s<sd.d*0.5?'<span class="pos">依赖进口</span>':'平衡'}</td><td>${fmt(G.imp[p])}${chg(p)}</td><td>${fnum(v.q)} <span class="mu" style="font-size:11px">${[0,1,2,3].map(ci=>fnum(me.ci[ci][p].q)).join('/')}</span></td><td>${v.q>0?v.ql.toFixed(0):'-'}</td><td class="mu">${P[p].inp?Object.keys(P[p].inp).map(k=>P[k].n+'×'+P[p].inp[k]).join(' + '):BT[P[p].src].n}</td></tr>`}
-    h+=`</table><div class="card"><label><input type="checkbox" ${me.autoImport?'checked':''} onchange="G.cos[0].autoImport=this.checked"> 原料/商品不足时自动向进口商采购</label><div class="row"><span>每座城市单品库存上限（超出按进口价 80% 甩卖）：无仓库 1000 件，每座仓库 +3000 件 · 当前各城 ${[0,1,2,3].map(ci=>fnum(capCity(me,ci))).join(' / ')}</span><input type="number" step="500" value="${me.maxStock}" onchange="G.cos[0].maxStock=Math.max(100,+this.value||3000)" style="width:100px"></div>
+    h+=`</table><h4 style="margin:14px 0 6px">📦 原料与中间品行情（全国统一批发市场，价格由供需决定）</h4><table><tr><th>商品</th><th>类别</th><th>国内产量/日</th><th>国内需求/日</th><th>供需</th><th>批发价（▲▼=供需溢价）</th><th>我的库存（沪/京/深/蓉/穗/杭）</th><th>品质</th><th>配方 / 来源</th></tr>`;
+    for(const p of [...RAW,...MID]){const v=me.inv[p],sd=G.sd[p]||{s:0,d:0};h+=`<tr><td>${P[p].ic} ${P[p].n}</td><td>${{raw:'原料',mid:'中间品'}[P[p].cat]}</td><td>${fnum(sd.s)}</td><td>${fnum(sd.d)}</td><td>${sd.s>sd.d*1.1?'<span class="neg">过剩</span>':sd.s<sd.d*0.5?'<span class="pos">依赖进口</span>':'平衡'}</td><td>${fmt(G.imp[p])}${chg(p)}</td><td>${fnum(v.q)} <span class="mu" style="font-size:11px">${G.cities.map((_,ci)=>fnum(me.ci[ci][p].q)).join('/')}</span></td><td>${v.q>0?v.ql.toFixed(0):'-'}</td><td class="mu">${P[p].inp?Object.keys(P[p].inp).map(k=>P[k].n+'×'+P[p].inp[k]).join(' + '):BT[P[p].src].n}</td></tr>`}
+    h+=`</table><div class="card"><label><input type="checkbox" ${me.autoImport?'checked':''} onchange="G.cos[0].autoImport=this.checked"> 原料/商品不足时自动向进口商采购</label><div class="row"><span>每座城市单品库存上限（超出按进口价 80% 甩卖）：无仓库 1000 件，每座仓库 +3000 件 · 当前各城 ${G.cities.map((_,ci)=>fnum(capCity(me,ci))).join(' / ')}</span><input type="number" step="500" value="${me.maxStock}" onchange="G.cos[0].maxStock=Math.max(100,+this.value||3000)" style="width:100px"></div>
     <label><input type="checkbox" ${me.b2b?'checked':''} onchange="G.cos[0].b2b=this.checked"> 🤝 允许向其他公司批发供货（B2B）</label> <select onchange="G.cos[0].b2bk=+this.value">${[[0.85,'进口价 85%'],[0.9,'进口价 90%'],[0.95,'进口价 95%'],[0.99,'进口价 99%']].map(([v,l])=>`<option value="${v}" ${Math.abs((me.b2bk||0.95)-v)<0.001?'selected':''}>${l}</option>`).join('')}</select><div class="mu" style="font-size:12px">对手门店或工厂缺货时，会优先从有库存的公司采购（价格+运费低于进口价才成交）。本月 B2B 供货收入：<b>${fmt(me.m.b2b||0)}</b>。</div><div class="mu">进口品质 = 市场平均 ${G.qm.toFixed(1)}，逐年提升。批发价随全国产量与需求变化：大家都生产同一种原料会导致价格下跌，供不应求则上涨。消费品的「参考价」跟随成本变化，城市总需求也会随实际售价涨跌。</div></div>`}
   else if(w==='re'){t='🏠 房地产市场';
     h=`<div class="tabs">${[['overview','📈 楼市行情'],['auction','🔨 土地拍卖'],['buy','🏢 可收购物业'],['mine','📋 我的物业']].map(([k,v])=>`<button class="${reTab===k?'on':''}" onclick="reTab='${k}';openWin('re')">${v}</button>`).join('')}</div>`;
@@ -1289,7 +1294,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       if(!list.length)h+='<tr><td colspan="8" class="mu">你还没有物业。左侧「🏠 地产」分组可以买地、盖住宅楼和写字楼。</td></tr>';h+='</table>'}}
   else if(w==='net'){t='🌐 互联网产业';const yr=yearNow();
     h=`<div class="mu" style="margin-bottom:8px">互联网渗透率 ${(G.adopt*100).toFixed(1)}%（1993 年起逐年上升）。建「互联网公司」开发产品（Lv1 上线），建「数据中心」承载用户。商业化越高单用户收入越高，但用户越容易流失。</div>
-    <div class="row"><span>我的服务器：${fnum(usersOf(me))} / ${fnum(capOf(me))} 用户</span><span>本月互联网收入 ${fmt(me.m.net)}</span></div><div class="mu" style="font-size:12px;margin:4px 0">用户上限 = 四城总人口 ${fnum(G.cities.reduce((x,c)=>x+c.pop,0))} × 产品渗透率 × 互联网普及度。渗透越接近上限增长越慢（见顶）；单个产品份额超过 60% 可能被反垄断罚款。</div>
+    <div class="row"><span>我的服务器：${fnum(usersOf(me))} / ${fnum(capOf(me))} 用户</span><span>本月互联网收入 ${fmt(me.m.net)}</span></div><div class="mu" style="font-size:12px;margin:4px 0">用户上限 = 六城总人口 ${fnum(G.cities.reduce((x,c)=>x+c.pop,0))} × 产品渗透率 × 互联网普及度。渗透越接近上限增长越慢（见顶）；单个产品份额超过 60% 可能被反垄断罚款。</div>
     <table><tr><th>产品</th><th>开放</th><th>用户上限</th><th>已渗透</th><th>我的用户</th><th>份额</th><th>技术</th><th>商业化</th><th>广告/日</th><th>领先者</th></tr>`;
     for(const k of NK){const U=G.netU[k]||0;const lead=G.cos.filter(c=>!c.dead).sort((a,b)=>b.users[k]-a.users[k])[0];
       h+=`<tr><td>${NET[k].ic} ${NET[k].n}</td><td>${yr>=NET[k].year?'✅':NET[k].year}</td><td>${fnum(U)}</td><td style="width:90px"><div class="bar"><i style="width:${((G.netSat||{})[k]||0)*100}%;background:${((G.netSat||{})[k]||0)>0.85?'#f43f5e':'#22c55e'}"></i></div></td><td>${fnum(me.users[k])}${G.anti&&G.anti[0+'_'+k]>G.day?' ⚖️':''}</td><td>${U?(me.users[k]/U*100).toFixed(1):'0'}%</td><td>Lv${me.tech[k]}</td>
@@ -1507,7 +1512,7 @@ window.trade=(id,pct)=>{const me=G.cos[0],c=G.cos[id],hd=G.hold[id]||0;
   else{const n=pct<=-100?hd:Math.min(hd,SHARES*(-pct)/100);if(n<=0)return;const sp=sharePrice(c),got=n*sp*0.99;G.cost[id]=(G.cost[id]||0)*(1-n/hd);me.cash+=got;G.hold[id]=hd-n;c.sent=Math.max(0.6,c.sent*(1-0.004*n/SHARES*100));toast(`卖出 ${c.name} 股份，回收 ${fmt(got)}`)}
   openWin('stock',true)};
 window.takeover=id=>{const me=G.cos[0],c=G.cos[id];for(const b of G.b)if(b.o===id){b.o=0;b.paid=bval(b);ensureSub(me,b,true);G.cities[b.c].dirty=true}
-  me.cash+=c.cash;me.loan+=c.loan;for(let ci=0;ci<4;ci++)for(const p of PK)addInv(me,p,c.ci[ci][p].q,c.ci[ci][p].ql,ci);
+  me.cash+=c.cash;me.loan+=c.loan;for(let ci=0;ci<G.cities.length;ci++)for(const p of PK)if(c.ci[ci])addInv(me,p,c.ci[ci][p].q,c.ci[ci][p].ql,ci);
   for(const p of ALLK){me.tech[p]=Math.max(me.tech[p],c.tech[p]);me.brand[p]=Math.max(me.brand[p],c.brand[p]*0.8)}for(const k of NK)me.users[k]+=c.users[k];
   if(G.own&&G.own[id]){for(const t in G.own[id]){if(+t!==0&&!G.cos[t].dead){G.hold[t]=(G.hold[t]||0)+G.own[id][t];G.cost[t]=(G.cost[t]||0)+((G.ownCost[id]||{})[t]||0)}}delete G.own[id];delete G.ownCost[id]}for(const h in G.own||{}){delete G.own[h][id];if(G.ownCost[h])delete G.ownCost[h][id]}G.wars=(G.wars||[]).filter(w=>w.a!==id&&w.b!==id);
   c.dead=true;delete G.hold[id];delete G.cost[id];me.acquired++;addNews(`🤝 ${me.name}完成对${c.name}的收购，${c.founder}黯然离场`);toast(`🎉 成功收购 ${c.name}！`);openWin('stock',true)};

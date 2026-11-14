@@ -58,5 +58,5 @@ const capOf=c=>G.b.reduce((s,b)=>s+(b.o===c.id&&b.type==='dc'?50000*lvMul(b.lv):
 const usersOf=c=>NK.reduce((s,k)=>s+c.users[k],0);
 const yearNow=()=>{const d=new Date(G.date);return d.getUTCFullYear()+d.getUTCMonth()/12};
 function makeAuctions(){G.auctions=G.auctions.filter(a=>a.exp>G.day&&lotOk(G.cities[a.c],a.x,a.y));
-  while(G.auctions.length<4){const ci=Math.floor(rnd()*4),city=G.cities[ci],lot=findLot(city,rnd()<0.6);if(!lot)break;G.auctions.push({c:ci,x:lot.x,y:lot.y,k:0.7+rnd()*0.45,exp:G.day+60+Math.floor(rnd()*60)})}}
+  while(G.auctions.length<Math.max(4,G.cities.length)){const ci=Math.floor(rnd()*G.cities.length),city=G.cities[ci],lot=findLot(city,rnd()<0.6);if(!lot)break;G.auctions.push({c:ci,x:lot.x,y:lot.y,k:0.7+rnd()*0.45,exp:G.day+60+Math.floor(rnd()*60)})}}
 
