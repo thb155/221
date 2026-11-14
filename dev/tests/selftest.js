@@ -15,6 +15,7 @@
 
   setTimeout(() => {
     try { localStorage.removeItem('cel-test-dummy'); } catch (e) {}
+    T('一键全选/恢复默认竞争对手', () => { pickAll(1);const a=opt.picks.length;pickAll(0);const b=opt.picks.length;return (a===AI_DEF.length&&b===6)||`${a} ${b}`; });
     T('新游戏可以启动', () => { fresh(); boot(); return G && G.cos.length > 1 && G.cities.length === CITY_DEF.length; });
     T('模拟 5 年无异常', () => { run(365 * 5); return G.day >= 365 * 5; });
     T('所有公司的现金/贷款/净资产都是有效数字', () => {
