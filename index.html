@@ -148,6 +148,53 @@ body.m .tabs button{flex:none}
 .badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#f43f5e;color:#fff;font-size:11px;line-height:17px;font-weight:700}
 .ib{display:flex;gap:10px;padding:8px;border-bottom:1px solid var(--bd);cursor:pointer}.ib.u{background:rgba(56,189,248,.07)}.ib .ic{font-size:20px}
 .dec{border-color:rgba(251,191,36,.6)!important}
+
+/* ===== 界面优化 ===== */
+:root{--pan:rgba(12,19,34,.95);--ac2:#38bdf8}
+button{transition:background .15s,border-color .15s,transform .08s}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:2px solid #38bdf8;outline-offset:1px}
+.panel{border-color:rgba(148,163,184,.16);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04)}
+#top .stat{background:rgba(30,41,59,.55);border:1px solid rgba(148,163,184,.1);border-radius:9px;padding:3px 9px}
+#top .tb{display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 9px!important;font-size:17px;line-height:1.1;min-width:48px}
+#top .tb i{font-style:normal;font-size:11px;color:var(--mu)}
+#top .tb:hover i{color:#e2e8f0}
+#top .tb .badge{top:-4px;right:-2px}
+#modal{backdrop-filter:blur(2px)}
+#modal .win{width:min(1180px,96vw);height:88vh;animation:pop .16s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.985)}}
+.wbody{display:flex;flex:1;min-height:0}
+#wnav{width:136px;flex:none;border-right:1px solid var(--bd);padding:8px 6px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+#wnav .ng{font-size:11px;color:var(--mu);letter-spacing:2px;margin:8px 6px 3px}
+#wnav .ng:first-child{margin-top:2px}
+#wnav .nb{display:flex;align-items:center;gap:7px;text-align:left;background:transparent;border:1px solid transparent;padding:7px 8px;position:relative}
+#wnav .nb span{width:20px;text-align:center}
+#wnav .nb:hover{background:rgba(56,189,248,.1)}
+#wnav .nb.on{background:linear-gradient(90deg,rgba(14,165,233,.35),rgba(14,165,233,.08));border-color:rgba(56,189,248,.45);font-weight:700}
+#wnav .nb em{font-style:normal;margin-left:auto;background:#f43f5e;border-radius:9px;padding:0 6px;font-size:11px;font-weight:700}
+#mb{flex:1;min-width:0}
+#mb h4{display:flex;align-items:center;gap:6px;font-size:13px;color:#cbd5e1;letter-spacing:.5px;margin:2px 0 8px}
+.card{transition:border-color .15s}
+.card:hover{border-color:rgba(148,163,184,.3)}
+#mb table{border-collapse:separate;border-spacing:0}
+#mb th{position:sticky;top:-12px;background:#111b2e;z-index:1;border-bottom:1px solid rgba(148,163,184,.25)}
+#mb tr:nth-child(even) td{background:rgba(148,163,184,.035)}
+#mb tr:hover td{background:rgba(56,189,248,.06)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:8px 0}
+.kpi{background:linear-gradient(160deg,#18243a,#121c2e);border:1px solid var(--bd);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column}
+.kpi span{font-size:12px;color:var(--mu)}.kpi b{font-size:19px;margin:2px 0}.kpi small{font-size:11px;color:var(--mu)}
+.toast{border-left:4px solid #38bdf8;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.toast.t-war,.toast.t-hr{border-left-color:#f43f5e}.toast.t-decision{border-left-color:#fbbf24}.toast.t-goal{border-left-color:#22c55e}.toast.t-macro{border-left-color:#a78bfa}.toast.t-report{border-left-color:#38bdf8}.toast.t-dip{border-left-color:#14b8a6}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:rgba(148,163,184,.25);border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+.tabs button.on{box-shadow:0 0 0 1px rgba(56,189,248,.5) inset}
+body.m #top .tb{min-width:44px;font-size:16px}
+body.m .wbody{flex-direction:column}
+body.m #wnav{width:auto;flex-direction:row;border-right:0;border-bottom:1px solid var(--bd);overflow-x:auto;overflow-y:hidden;padding:6px;gap:4px;scrollbar-width:none}
+body.m #wnav::-webkit-scrollbar{display:none}
+body.m #wnav .ng{display:none}
+body.m #wnav .nb{flex:none;padding:7px 10px;font-size:13px}
+body.m #modal .win{height:100%}
+body.m #mb th{position:static}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -158,30 +205,24 @@ body.m .tabs button{flex:none}
 
 <div id="top" class="panel">
   <div class="stat"><span id="cname">公司</span><b id="s-cash">¥0</b></div>
-  <div class="stat"><span>净资产</span><b id="s-nw">¥0</b></div>
-  <div class="stat"><span>本月利润</span><b id="s-pf">¥0</b></div>
-  <div class="stat"><span>日期</span><b id="s-date">-</b></div>
+  <div class="stat"><span>📈 净资产</span><b id="s-nw">¥0</b></div>
+  <div class="stat"><span>💰 本月利润</span><b id="s-pf">¥0</b></div>
+  <div class="stat"><span>📅 日期</span><b id="s-date">-</b></div>
   <div class="stat" id="s-macro" data-w="macro" style="cursor:pointer"><span id="s-rate">利率 4.50%</span><b id="s-mev">🌍</b></div>
   <div class="grp spd" id="spd"><button data-s="0" title="暂停 (空格)">⏸</button><button data-s="1">▶</button><button data-s="2">⏩</button><button data-s="3">⏭</button></div>
   <div id="menu">
   <div class="grp" id="cities"></div>
   <div class="sep"></div>
-  <button data-w="macro">🌍 宏观</button>
-  <button data-w="market">📊 市场</button>
-  <button data-w="re">🏠 地产</button>
-  <button data-w="net">🌐 互联网</button>
-  <button data-w="inbox" id="btn-inbox" style="position:relative">🔔 通知<span id="ibadge" class="badge hidden">0</span></button>
-  <button data-w="dash">📊 看板</button>
-  <button data-w="report">📋 月报</button>
-  <button data-w="war">⚔️ 商战</button>
-  <button data-w="hr">👔 人才</button>
-  <button data-w="finance">💼 财务</button>
-  <button data-w="research">🔬 研发</button>
-  <button data-w="stock">📈 股市</button>
-  <button data-w="rank">🏆 排行</button>
-  <button data-w="settings" title="设置：存档读档、画质">⚙️ 设置</button>
-  <button data-w="help">❔</button>
-  <button id="btn-save" title="存档 / 读档">💾 存档</button>
+  <button data-w="dash" class="tb">📊<i>看板</i></button>
+  <button data-w="report" class="tb">📑<i>财报</i></button>
+  <button data-w="market" class="tb">🛒<i>市场</i></button>
+  <button data-w="finance" class="tb">💼<i>财务</i></button>
+  <button data-w="stock" class="tb">📈<i>股市</i></button>
+  <button data-w="war" class="tb">⚔️<i>商战</i></button>
+  <button data-w="inbox" id="btn-inbox" class="tb" style="position:relative">🔔<i>通知</i><span id="ibadge" class="badge hidden">0</span></button>
+  <button data-w="dash" class="tb more" title="全部功能：地产、互联网、研发、人才、排行、宏观……">☰<i>全部</i></button>
+  <button data-w="settings" class="tb" title="设置：存档读档、画质、音效">⚙️<i>设置</i></button>
+  <button id="btn-save" class="tb" title="存档 / 读档">💾<i>存档</i></button>
   </div>
 </div>
 
@@ -194,7 +235,7 @@ body.m .tabs button{flex:none}
 <div id="heat" class="panel"><span class="mu" style="padding:0 4px">热力图</span><button data-h="0" class="on">关</button><button data-h="1">人口</button><button data-h="2">地价</button></div>
 <canvas id="mini" class="panel" width="160" height="90"></canvas>
 <div id="tip" class="hidden"></div>
-<div id="modal" class="hidden"><div class="win panel"><div class="win-h"><span id="mt"></span><button id="mx">✕</button></div><div id="mb"></div></div></div>
+<div id="modal" class="hidden"><div class="win panel"><div class="win-h"><span id="mt"></span><button id="mx">✕</button></div><div class="wbody"><nav id="wnav"></nav><div id="mb"></div></div></div></div>
 <div id="toasts"></div>
 
 <div id="start">
@@ -501,7 +542,7 @@ function scnCheck(){const sc=SCN[G.scn];if(!sc||!sc.win||G.scnDone)return;const 
   if(sc.win(me)){G.scnDone='win';notify('goal',`🏆 剧本胜利：${sc.n}`,sc.goal,true);openScnEnd(true)}
   else if(y>sc.deadline){G.scnDone='lose';notify('goal',`剧本失败：${sc.n}`,'未在期限内达成目标，可继续自由游玩',true);openScnEnd(false)}
   for(const [m,k] of sc.force||[])if(G.day>=m*30&&!(G.scnF||{})[k]){(G.scnF=G.scnF||{})[k]=1;startMacro(k)}}
-function openScnEnd(win){const sc=SCN[G.scn];setSpeed(0);curWin='scn';$('#modal').classList.remove('hidden');$('#mt').textContent=win?'🏆 剧本胜利':'⌛ 剧本结束';
+function openScnEnd(win){const sc=SCN[G.scn];setSpeed(0);curWin='scn';$('#modal').classList.remove('hidden');$('#wnav').classList.add('hidden');$('#mt').textContent=win?'🏆 剧本胜利':'⌛ 剧本结束';
   $('#mb').innerHTML=`<div style="text-align:center;padding:20px"><div style="font-size:54px">${win?'🏆':'⌛'}</div><h2>${sc.ic} ${sc.n}</h2><p>${win?'恭喜！你达成了目标：':'很遗憾，未能在期限内达成：'}${sc.goal}</p><p class="mu">用时 ${(G.day/365).toFixed(1)} 年 · 最终净资产 ${fmt(netWorth(G.cos[0]))}</p><button class="pri" onclick="closeModal();setSpeed(1)">继续自由经营</button> <button onclick="location.reload()">返回主菜单</button></div>`}
 function newGame(o){const sc=SCN[o.scn||'free']||SCN.free;if(sc.home!=null)o.home=sc.home;window.__aiLv=o.ai??1;
   G={aiLv:o.ai??1,ver:4,scn:o.scn||'free',day:0,date:Date.UTC(sc.year||1990,0,1),qm:50,imp:{},cities:CITY_DEF.map(genCity),cur:o.home,b:[],nid:1,cos:[],hold:{},cost:{},goal:0,news:[],over:false,adopt:0,netU:{},auctions:[]};
@@ -552,7 +593,7 @@ const sectOf=t=>t==='wh'?'logi':BT[t].g==='retail'?'retail':(t==='farm'||t==='fo
 const shortN=c=>(c.name.replace(/集团|公司|有限|控股|股份/g,'')||c.name).slice(0,4);
 function ensureSub(c,b,force){c.subs=c.subs||[];if(b.sub&&!force&&c.subs.some(s2=>s2.id===b.sub))return;const sc=sectOf(b.type),id='d_'+sc;
   if(!c.subs.some(s2=>s2.id===id))c.subs.push({id,name:shortN(c)+SECT[sc].n,ic:SECT[sc].ic,sect:sc});b.sub=id}
-const segAcc=(b,k,v)=>{if(b.o!==0)return;const pm=b.pm||(b.pm={rev:0,cogs:0,op:0});pm[k]+=v};
+const segAcc=(b,k,v)=>{if(b.o!==0)return;const pm=b.pm||(b.pm={rev:0,cogs:0,op:0});pm[k]+=v;const pq=b.pq||(b.pq={rev:0,cogs:0,op:0});pq[k]+=v};
 function subMonth(c,label,m){c.subHist=c.subHist||{};const tot={};for(const s2 of c.subs||[])tot[s2.id]={rev:0,cogs:0,op:0,n:0};
   for(const b of G.b){if(b.o!==c.id)continue;ensureSub(c,b);const t=tot[b.sub]||(tot[b.sub]={rev:0,cogs:0,op:0,n:0});const pm=b.pm||{rev:0,cogs:0,op:0};t.rev+=pm.rev;t.cogs+=pm.cogs;t.op+=pm.op;t.n++;b.lm=pm;b.pm={rev:0,cogs:0,op:0}}
   let seg=0;for(const id in tot){const t=tot[id];t.profit=t.rev-t.cogs-t.op;t.label=label;seg+=t.profit;(c.subHist[id]=c.subHist[id]||[]).push(t);if(c.subHist[id].length>36)c.subHist[id].shift()}
@@ -692,21 +733,37 @@ function simDay(){
 function checkTech(c,p){while(c.rp[p]>=techNeed(c.tech[p])){c.rp[p]-=techNeed(c.tech[p]);c.tech[p]++;
   if(c.id===0)toast(`🔬 ${ic(p)} ${nm(p)} 技术 Lv${c.tech[p]}${NET[p]&&c.tech[p]===1?'，产品正式上线！':''}`);
   else if(NET[p]&&c.tech[p]===1)addNews(`${c.av} ${c.founder}：${c.name}旗下「${NET[p].n}」正式上线`)}}
-function buildReport(d){const me=G.cos[0],m=me.months[me.months.length-1],pv=me.months[me.months.length-2];if(!m)return;
+const QN=['一季报','半年报','三季报','年报'];
+const sumM=(arr)=>{const o={rev:0,net:0,rent:0,whole:0,purch:0,op:0,sal:0,logi:0,ad:0,int:0,dep:0,tax:0,profit:0};for(const m of arr)for(const k in o)o[k]+=m[k]||0;return o};
+const mYear=m=>+String(m.label).split('.')[0],mMon=m=>+String(m.label).split('.')[1];
+function buildReport(d){const me=G.cos[0],m=me.months[me.months.length-1];if(!m)return;const mo=d.getUTCMonth(),y=d.getUTCFullYear();
+  notify('report',`${m.label} 经营简讯`,`当月净利润 ${fmt(m.profit)}`,false);
+  if(mo%3!==2)return;const q=Math.floor(mo/3);
   const lab=(b)=>`${BT[b.type].ic}${BT[b.type].n}${isRetail(b)?'('+b.slots.map(x=>P[x.p].ic).join('')+')':b.prod?'('+ic(b.prod)+')':''}·${G.cities[b.c].n}`;
-  const bs=G.b.filter(b=>b.o===0&&b.lm).map(b=>({b,p:b.lm.rev-b.lm.cogs-b.lm.op}));const loss=bs.filter(x=>x.p<0).sort((a,b)=>a.p-b.p).slice(0,5),win=bs.filter(x=>x.p>0).sort((a,b)=>b.p-a.p).slice(0,3);
-  G.impPrev=G.impPrev||{};const mine=new Set();G.b.forEach(b=>{if(b.o===0&&b.type==='factory'&&b.prod)Object.keys(P[b.prod].inp).forEach(k=>mine.add(k));if(b.o===0&&isRetail(b))b.slots.forEach(x=>mine.add(x.p))});
-  const chg=PK.map(p=>({p,r:G.impPrev[p]?G.imp[p]/G.impPrev[p]-1:0,mine:mine.has(p)})).filter(x=>Math.abs(x.r)>=0.04).sort((a,b)=>(b.mine-a.mine)||Math.abs(b.r)-Math.abs(a.r)).slice(0,6);PK.forEach(p=>G.impPrev[p]=G.imp[p]);
-  const tips=[];if(me.cash<(m.op||0)*0.5)tips.push('现金不足半个月运营成本，注意资金链');const TA=Math.max(1,baseNW(me)+me.loan);if(me.loan/TA>0.5)tips.push(`资产负债率 ${(me.loan/TA*100).toFixed(0)}%，偏高`);
+  const inY=(yy,from,to)=>me.months.filter(x=>mYear(x)===yy&&mMon(x)>=from&&mMon(x)<=to);
+  const cum=sumM(inY(y,1,mo+1)),cumLY=sumM(inY(y-1,1,mo+1)),qs=sumM(inY(y,mo-1,mo+1)),qp=q>0?sumM(inY(y,mo-4,mo-2)):sumM(inY(y-1,10,12)),qLY=sumM(inY(y-1,mo-1,mo+1));
+  const hasLY=inY(y-1,1,mo+1).length>0,hasQP=(q>0?inY(y,mo-4,mo-2):inY(y-1,10,12)).length>0;
+  const bs=G.b.filter(b=>b.o===0&&b.pq).map(b=>({b,p:b.pq.rev-b.pq.cogs-b.pq.op,r:b.pq.rev}));const loss=bs.filter(x=>x.p<0).sort((a,b)=>a.p-b.p).slice(0,6),win=bs.filter(x=>x.p>0).sort((a,b)=>b.p-a.p).slice(0,5);
+  G.b.forEach(b=>{if(b.o===0)b.pq={rev:0,cogs:0,op:0}});
+  const SH=me.subHist||{},subs=(me.subs||[]).map(s2=>{const a2=(SH[s2.id]||[]).filter(x=>mYear(x)===y&&mMon(x)<=mo+1);return{n:s2.name,ic:s2.ic,rev:a2.reduce((x,z)=>x+z.rev,0),profit:a2.reduce((x,z)=>x+z.profit,0)}}).filter(x=>x.rev||x.profit).sort((a,b)=>b.profit-a.profit);
+  G.impQ=G.impQ||{};const mine=new Set();G.b.forEach(b=>{if(b.o===0&&b.type==='factory'&&b.prod)Object.keys(P[b.prod].inp).forEach(k=>mine.add(k));if(b.o===0&&isRetail(b))b.slots.forEach(x=>mine.add(x.p))});
+  const chg=PK.map(p=>({p,r:G.impQ[p]?G.imp[p]/G.impQ[p]-1:0,mine:mine.has(p)})).filter(x=>Math.abs(x.r)>=0.05).sort((a,b)=>(b.mine-a.mine)||Math.abs(b.r)-Math.abs(a.r)).slice(0,8);PK.forEach(p=>G.impQ[p]=G.imp[p]);
+  const qStart=Date.UTC(y,mo-2,1),macro=(G.mlog||[]).filter(x=>x.t>=qStart).map(x=>MDEF(x.k).ic+' '+x.txt);
+  const tips=[];const TA=Math.max(1,baseNW(me)+me.loan);if(me.cash<(m.op||0)*0.5)tips.push('现金不足半个月运营成本，注意资金链');if(me.loan/TA>0.5)tips.push(`资产负债率 ${(me.loan/TA*100).toFixed(0)}%，偏高`);
   G.b.forEach(b=>{if(b.o===0&&isRetail(b)&&b.slots.some(x=>x.sold>=BT[b.type].cap*lvMul(b.lv)*0.95))tips.push(`${lab(b)} 已满负荷，考虑扩建或提价`)});
   for(const p in GENP)if(me.inv[p].q>0&&techQ(me.tech[p])<qrefOf(p))tips.push(`${P[p].ic}${P[p].n} 自产品质落后当代基准 ${qrefOf(p)}，需加紧研发`);
-  if((m.logi||0)>REVof(m)*0.04)tips.push(`物流费用占营收 ${((m.logi||0)/Math.max(1,REVof(m))*100).toFixed(1)}%，考虑在主要销售城市建仓库`);
+  if((qs.logi||0)>REVof(qs)*0.04)tips.push(`物流费用占营收 ${((qs.logi||0)/Math.max(1,REVof(qs))*100).toFixed(1)}%，考虑在主要销售城市建仓库`);
   for(const r in ROLES){const e=(me.ex||{})[r];if(e&&e.sal<marketSal(e.skill,e.trait)*0.85)tips.push(`${ROLES[r].n} ${e.name} 薪资明显低于市场价，有被挖风险`)}
+  if(scaleF(me)>1.15)tips.push(`管理成本系数 ×${scaleF(me).toFixed(2)}，可出售低效建筑以降低规模不经济`);
   const wars=(G.wars||[]).filter(w=>w.a===0||w.b===0).map(w=>G.cos[w.a===0?w.b:w.a].name),noco=[];for(const [k] of WH)if(k%100===0&&!wars.includes(G.cos[Math.floor(k/100)].name))noco.push(G.cos[Math.floor(k/100)].name);
-  const R={label:m.label,profit:m.profit,prev:pv?pv.profit:null,rev:REVof(m),cash:me.cash,nw:netWorth(me),loss:loss.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),win:win.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),
-    chg:chg.map(x=>({p:x.p,r:x.r,mine:x.mine})),hr:G.mlogHR||[],wars,noco:[...new Set(noco)],macro:(G.mev||[]).map(e=>MDEF(e.k).ic+MDEF(e.k).n),pend:(G.pend||[]).length,tips:tips.slice(0,6)};
-  G.mlogHR=[];G.report=R;notify('report',`${m.label} 经营月报`,`净利润 ${fmt(m.profit)}${loss.length?`，${loss.length} 处亏损`:''}${chg.filter(x=>x.mine&&x.r>0).length?'，原料涨价':''}`,false);
+  const ph=me.ph||[],sp=sharePrice(me),sp0=ph.length>13?ph[ph.length-14]:ph[0]||sp;
+  const R={kind:QN[q],y,q,label:`${y} 年${QN[q]}`,cum,cumLY:hasLY?cumLY:null,qs,qp:hasQP?qp:null,qLY:hasLY?qLY:null,cash:me.cash,loan:me.loan,nw:netWorth(me),debt:me.loan/TA,sp,sp0,
+    loss:loss.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),win:win.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),subs,chg,hr:G.mlogHR||[],wars,noco:[...new Set(noco)],macro,pend:(G.pend||[]).length,tips:tips.slice(0,8)};
+  G.mlogHR=[];G.report=R;G.reports=G.reports||[];G.reports.unshift(R);if(G.reports.length>24)G.reports.length=24;repSel=0;
+  notify('report',`📑 ${R.label}发布`,`本期累计净利润 ${fmt(cum.profit)}${hasLY?`，同比 ${pctS(cum.profit,cumLY.profit)}`:''}${loss.length?`，${loss.length} 处亏损`:''}`,true);
   if(G.autoReport!==false&&!curWin){openWin('report')}}
+const pctS=(a,b)=>{if(b==null||!isFinite(b)||Math.abs(b)<1)return'—';const r=(a-b)/Math.abs(b)*100;return(r>=0?'+':'')+r.toFixed(1)+'%'};
+let repSel=0;
 const REVof=r=>r.rev+r.net+r.rent+r.whole;
 function monthEnd(d){
   scnCheck();renderGoal();
@@ -757,7 +814,7 @@ const atWar=(a,b)=>(G.wars||[]).some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a));
 function sectorOf(c){const n={};G.b.forEach(b=>{if(b.o===c.id){const s2=sectOf(b.type);if(s2!=='rd'&&s2!=='logi')n[s2]=(n[s2]||0)+1}});const k=Object.keys(n).sort((a,b)=>n[b]-n[a])[0];return k?SECT[k].n:'-'}
 /* ===== 通知中心 ===== */
 const NCAT={report:'📋',decision:'📩',war:'⚔️',hr:'👔',macro:'🌍',goal:'🎯',biz:'💡',dip:'🤝'};
-function notify(cat,title,body,pop){if(pop&&G.day>2)sfx(cat==='war'||cat==='decision'||cat==='hr'?'alert':cat==='goal'?'good':'click');G.inbox=G.inbox||[];G.inbox.unshift({t:G.date,cat,title,body:body||'',read:false});if(G.inbox.length>120)G.inbox.length=120;updBadge();if(pop)toast(`${NCAT[cat]||'🔔'} <b>${title}</b>${body&&!MOBILE?'<br><span class="mu">'+String(body).replace(/<[^>]+>/g,'').slice(0,60)+'</span>':''}`)}
+function notify(cat,title,body,pop){if(pop&&G.day>2)sfx(cat==='war'||cat==='decision'||cat==='hr'?'alert':cat==='goal'?'good':'click');G.inbox=G.inbox||[];G.inbox.unshift({t:G.date,cat,title,body:body||'',read:false});if(G.inbox.length>120)G.inbox.length=120;updBadge();if(pop)toast(`${NCAT[cat]||'🔔'} <b>${title}</b>${body&&!MOBILE?'<br><span class="mu">'+String(body).replace(/<[^>]+>/g,'').slice(0,60)+'</span>':''}`,cat)}
 function updBadge(){const n=(G&&G.inbox||[]).filter(x=>!x.read).length+(G&&G.pend||[]).length;const el=$('#ibadge');if(!el)return;el.textContent=n>99?'99+':n;el.classList.toggle('hidden',!n)}
 /* ===== 临时状态 ===== */
 const buffOn=k=>G.buff&&G.buff[k]&&G.buff[k]>G.day;
@@ -1141,7 +1198,7 @@ addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'&&G){e.prev
   if(e.key==='Escape'){setBuild(null);if(!$('#modal').classList.contains('hidden'))closeModal();else select(null)}if(e.key==='1')setSpeed(1);if(e.key==='2')setSpeed(2);if(e.key==='3')setSpeed(3)});
 
 /* ================= UI ================= */
-function toast(t){const d=document.createElement('div');d.className='toast';d.innerHTML=t;$('#toasts').appendChild(d);setTimeout(()=>d.remove(),MOBILE?2600:3200);while($('#toasts').children.length>(MOBILE?2:4))$('#toasts').firstChild.remove()}
+function toast(t,kind){const d=document.createElement('div');d.className='toast'+(kind?' t-'+kind:'');d.innerHTML=t;$('#toasts').appendChild(d);setTimeout(()=>d.remove(),MOBILE?2600:3200);while($('#toasts').children.length>(MOBILE?2:4))$('#toasts').firstChild.remove()}
 function addNews(t){const d=new Date(G.date);G.news.unshift(`[${d.getUTCFullYear()}/${d.getUTCMonth()+1}] ${t}`);G.news=G.news.slice(0,50);$('#news').textContent=G.news[0]}
 function setSpeed(s){speed=s;document.querySelectorAll('#spd button').forEach(b=>b.classList.toggle('on',+b.dataset.s===s))}
 document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.s));
@@ -1256,7 +1313,7 @@ window.buyAuction=i=>{const a=G.auctions[i];if(!a)return;const city=G.cities[a.c
   me.cash-=price;const b=placeBuilding(me,'land',a.c,a.x,a.y,true);b.paid=price;G.auctions.splice(i,1);addNews(`🔨 ${me.name}在${city.n}土地拍卖中竞得一块地，成交 ${fmt(price)}`);toast('🔨 竞拍成功！可在地块上开发');openWin('re',true)};
 
 /* ================= 窗口 ================= */
-let ibTab='all',setTab='save',curWin=null,reTab='overview',hrTab='team',hrRole=null,finTab='is',subSel=null;
+let finPer='m',ibTab='all',setTab='save',curWin=null,reTab='overview',hrTab='team',hrRole=null,finTab='is',subSel=null;
 function closeModal(){$('#modal').classList.add('hidden');curWin=null}
 $('#mx').onclick=closeModal;$('#modal').addEventListener('pointerdown',e=>{if(e.target.id==='modal')closeModal()});
 document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{if(MOBILE)document.body.classList.remove('showb');openWin(b.dataset.w)});
@@ -1302,11 +1359,13 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       <td><input type="number" min="0" step="500" value="${me.ad[k]}" style="width:78px" onchange="G.cos[0].ad['${k}']=Math.max(0,+this.value||0)"></td><td>${lead&&lead.users[k]>0?`<span style="color:${lead.col}">${lead.name}</span> ${fnum(lead.users[k])}`:'-'}</td></tr>`}
     h+='</table>'}
   else if(w==='finance'){t='💼 财务中心';const m=me.m,live={...m,label:'本月'};live.profit=m.rev+m.net+m.rent+m.dep+m.whole-m.purch-m.op-(m.sal||0)-(m.logi||0)-m.ad-m.int;live.cashEnd=me.cash;live.fin=me.loan-(m.loan0??me.loan);live.inv=(me.cash-(m.cash0??me.cash))-live.profit-live.fin;
-    const hist=me.months,last12=hist.slice(-12),sum12={label:'近12月'};['rev','net','rent','whole','purch','op','sal','ad','int','dep','tax','profit','fin','inv'].forEach(k=>sum12[k]=last12.reduce((s2,x)=>s2+(x[k]||0),0));
+    const hist=me.months,last12=hist.slice(-12),sum12={label:'近12月'};['rev','net','rent','whole','purch','op','sal','logi','ad','int','dep','tax','profit','fin','inv'].forEach(k=>sum12[k]=last12.reduce((s2,x)=>s2+(x[k]||0),0));
     const REV=r=>r.rev+r.net+r.rent+r.whole,GP=r=>REV(r)-r.purch,OPP=r=>GP(r)-r.op-(r.sal||0)-(r.logi||0)-r.ad,EBT=r=>OPP(r)-r.int+r.dep,PROF=r=>r.profit??(EBT(r)-(r.tax||0));
     h=`<div class="tabs">${[['is','📑 利润表'],['bs','🏦 资产负债表'],['cf','💵 现金流量表'],['sub','🏢 子公司'],['chart','📈 图表']].map(([k,v])=>`<button class="${finTab===k?'on':''}" onclick="finTab='${k}';openWin('finance')">${v}</button>`).join('')}</div>`;
     const cell=(v,neg,bold)=>`<td class="${neg?(v>0?'neg':''):(v<0?'neg':'')}">${bold?'<b>':''}${neg&&v?'-':''}${fmt(v||0)}${bold?'</b>':''}</td>`;
-    if(finTab==='is'){const cols=[...hist.slice(-5),live,sum12];
+    if(finTab==='is'){finPer=finPer||'m';let cols;if(finPer==='m')cols=[...hist.slice(-5),live,sum12];else{const all=[...hist,live],mp=new Map();for(const x of all){const yy=mYear(x)||new Date(G.date).getUTCFullYear(),mm=x===live?new Date(G.date).getUTCMonth()+1:mMon(x),k=finPer==='q'?`${yy}Q${Math.ceil(mm/3)}`:`${yy}年`;if(!mp.has(k))mp.set(k,[]);mp.get(k).push(x)}
+        cols=[...mp.entries()].slice(-6).map(([k,arr])=>Object.assign(sumM(arr),{label:k+(arr.includes(live)?'（进行中）':'')}))}
+      h+=`<div class="tabs">${[['m','月度'],['q','季度'],['y','年度']].map(([k,v])=>`<button class="${finPer===k?'on':''}" onclick="finPer='${k}';openWin('finance')">${v}</button>`).join('')}</div>`;
       const rows=[['一、营业收入',REV,0,1],['　零售收入',r=>r.rev],['　互联网收入',r=>r.net],['　租金收入',r=>r.rent],['　批发及其他收入',r=>r.whole],['二、营业成本（外购商品/原料）',r=>r.purch,1],['三、毛利',GP,0,1],['四、期间费用'],['　运营费用（门店/工厂/研发/员工工资）',r=>r.op,1],['　物流费用（运输/配送）',r=>r.logi||0,1],['　管理费用（高管薪酬）',r=>r.sal||0,1],['　销售费用（广告）',r=>r.ad,1],['五、营业利润',OPP,0,1],['　财务费用（贷款利息）',r=>r.int,1],['　财务收入（存款利息）',r=>r.dep],['六、利润总额',EBT,0,1],['　所得税',r=>r.tax||0,1],['七、净利润',PROF,0,1]];
       h+=`<table><tr><th>利润表（合并）</th>${cols.map(c2=>`<th>${c2.label}</th>`).join('')}</tr>${rows.map(([nm2,f2,neg,bold])=>f2?`<tr${bold?' style="background:rgba(56,189,248,.06)"':''}><td>${bold?'<b>'+nm2+'</b>':nm2}</td>${cols.map(c2=>cell(f2(c2),neg,bold)).join('')}</tr>`:`<tr><td class="mu">${nm2}</td>${cols.map(()=>'<td></td>').join('')}</tr>`).join('')}
       ${(()=>{const subs3=G.cos.filter(c2=>!c2.dead&&c2.ai&&stake(0,c2.id)>=0.51);if(!subs3.length)return'';return`<tr><td class="mu">八、控股子公司净利润（并表·归属本公司）</td>${cols.map(c2=>{const v=subs3.reduce((x,o)=>{const m2=o.months.find(mm=>mm.label===c2.label);return x+(m2?m2.profit*stake(0,o.id):0)},0);return cell(v)}).join('')}</tr>`})()}
@@ -1388,17 +1447,24 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       <div class="card"><h4>📈 净资产对比（月）</h4>${svgChart(al.sort((a,b)=>netWorth(b)-netWorth(a)).slice(0,6).map(c=>({name:c.name,col:c.col,w:c.id===0?3:1.6,vals:(()=>{const L=Math.min(60,Math.max(...al.map(x=>x.nwHist.length)));const a2=c.nwHist.slice(-L);return Array(L-a2.length).fill(NaN).concat(a2)})()})),((L2)=>Array.from({length:L2},(_,i)=>{const d=new Date(G.date);d.setUTCMonth(d.getUTCMonth()-(L2-i));return d.getUTCFullYear()+'.'+(d.getUTCMonth()+1)}))(Math.min(60,Math.max(1,...al.map(x=>x.nwHist.length)))),{zero:false,h:210})}</div>`}
   else if(w==='inbox'){t='🔔 通知中心';G.inbox=G.inbox||[];const pend=G.pend||[];
     h=`${pend.length?`<h4>📩 待你决策（${pend.length}）</h4>`+pend.map(d=>`<div class="card dec"><div class="row"><b>${d.title}</b><span class="mu" style="font-size:11px">${Math.max(0,d.exp-G.day)} 天后自动选「${d.opts[d.opts.length-1]}」</span></div><div style="margin:6px 0;line-height:1.6">${d.body}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${d.opts.map((o,i)=>`<button class="${i===0?'pri':''}" onclick="decide(${d.id},${i})">${o}</button>`).join('')}</div></div>`).join(''):''}
-    <div class="tabs" style="margin-top:8px">${[['all','全部'],...Object.entries({report:'月报',decision:'决策',war:'商战',hr:'人事',macro:'宏观',dip:'外交',goal:'目标',biz:'经营'})].map(([k,v])=>`<button class="${ibTab===k?'on':''}" onclick="ibTab='${k}';openWin('inbox')">${NCAT[k]||'📬'} ${v}</button>`).join('')}<button onclick="G.inbox.forEach(x=>x.read=true);updBadge();openWin('inbox')">全部已读</button></div>
+    <div class="tabs" style="margin-top:8px">${[['all','全部'],...Object.entries({report:'财报',decision:'决策',war:'商战',hr:'人事',macro:'宏观',dip:'外交',goal:'目标',biz:'经营'})].map(([k,v])=>`<button class="${ibTab===k?'on':''}" onclick="ibTab='${k}';openWin('inbox')">${NCAT[k]||'📬'} ${v}</button>`).join('')}<button onclick="G.inbox.forEach(x=>x.read=true);updBadge();openWin('inbox')">全部已读</button></div>
     <div class="card" style="padding:0">${G.inbox.filter(x=>ibTab==='all'||x.cat===ibTab).slice(0,80).map((x,i)=>{const dt=new Date(x.t);return`<div class="ib ${x.read?'':'u'}" onclick="ibOpen(${G.inbox.indexOf(x)})"><span class="ic">${NCAT[x.cat]||'🔔'}</span><div style="flex:1;min-width:0"><div class="row"><b style="font-weight:${x.read?400:700}">${x.title}</b><span class="mu" style="font-size:11px">${dt.getUTCFullYear()}/${dt.getUTCMonth()+1}</span></div>${x.body?`<div class="mu" style="font-size:12px">${x.body}</div>`:''}</div></div>`}).join('')||'<div class="mu" style="padding:12px">暂无通知</div>'}</div>`}
-  else if(w==='report'){t='📋 经营月报';const R=G.report;
-    if(!R)h='<div class="mu">第一份月报会在月底生成。</div>';else{const dl=R.prev!=null?R.profit-R.prev:0;
-    h=`<div class="row"><b style="font-size:16px">${R.label} 月度经营报告</b><label class="mu" style="font-size:12px"><input type="checkbox" ${G.autoReport!==false?'checked':''} onchange="G.autoReport=this.checked"> 每月自动弹出</label></div>
-    <div class="mgrid" style="margin-top:6px"><div class="card"><div class="row"><span class="k">净利润</span><b class="${R.profit>=0?'pos':'neg'}" style="font-size:18px">${fmt(R.profit)}</b></div><div class="row"><span class="k">环比</span><span class="${dl>=0?'pos':'neg'}">${R.prev!=null?(dl>=0?'▲':'▼')+fmt(Math.abs(dl)):'-'}</span></div><div class="row"><span class="k">营业收入</span><span>${fmt(R.rev)}</span></div><div class="row"><span class="k">现金 / 净资产</span><span>${fmt(R.cash)} / ${fmt(R.nw)}</span></div></div>
-    <div class="card"><h4>🔻 亏损的店铺/建筑</h4>${R.loss.length?R.loss.map(x=>`<div class="row" style="cursor:pointer" onclick="goTo(${x.id})"><span>${x.n}</span><b class="neg">${fmt(x.p)}</b></div>`).join(''):'<div class="pos">本月没有亏损的建筑 👍</div>'}<h4 style="margin-top:6px">🏆 最赚钱</h4>${R.win.map(x=>`<div class="row" style="cursor:pointer" onclick="goTo(${x.id})"><span>${x.n}</span><b class="pos">${fmt(x.p)}</b></div>`).join('')||'<div class="mu">-</div>'}</div>
-    <div class="card"><h4>📈 原料与商品价格异动（较上月）</h4>${R.chg.length?R.chg.map(x=>`<div class="row"><span>${P[x.p].ic} ${P[x.p].n}${x.mine?' <span class="tag">你在用</span>':''}</span><b class="${x.r>0?'neg':'pos'}">${x.r>0?'▲':'▼'}${(Math.abs(x.r)*100).toFixed(1)}%</b></div>`).join(''):'<div class="mu">价格平稳</div>'}</div>
-    <div class="card"><h4>👔 人事</h4>${R.hr.length?R.hr.map(x=>`<div class="neg">😢 ${x}</div>`).join(''):'<div class="mu">本月无人离职</div>'}<h4 style="margin-top:6px">⚔️ 竞争</h4>${R.wars.length?`<div class="neg">交战中：${R.wars.join('、')}</div>`:'<div class="mu">没有商战</div>'}${R.noco.length?`<div class="neg">对你不配合：${R.noco.join('、')}</div>`:''}<h4 style="margin-top:6px">🌍 宏观</h4><div class="mu">${R.macro.join('、')||'平稳'}</div></div></div>
-    ${R.pend?`<div class="card dec"><b>📩 有 ${R.pend} 件事等你决策</b> <button class="pri" onclick="openWin('inbox')">去处理</button></div>`:''}
-    <div class="card"><h4>💡 经营建议</h4>${R.tips.length?R.tips.map(x=>`<div>· ${x}</div>`).join(''):'<div class="mu">一切正常，继续保持</div>'}</div>`}}
+  else if(w==='report'){t='📑 定期财报';const RS=G.reports||[];const R=RS[repSel]||RS[0];
+    if(!R){const d=new Date(G.date),mo=d.getUTCMonth();h=`<div class="card mu">第一份财报（${['一季报','一季报','一季报','半年报','半年报','半年报','三季报','三季报','三季报','年报','年报','年报'][mo]}）将在 ${d.getUTCFullYear()} 年 ${Math.floor(mo/3)*3+3} 月底发布。<br>每季度末自动发布：一季报（1–3 月）、半年报（1–6 月）、三季报（1–9 月）、年报（全年）。月度简讯可在「🔔 通知」里查看。</div>`}
+    else{const c=R.cum,qs=R.qs,REV=x=>x?x.rev+x.net+x.rent+x.whole:null,GP=x=>x?REV(x)-x.purch:null,OP=x=>x?GP(x)-x.op-(x.sal||0)-(x.logi||0)-x.ad:null,PF=x=>x?x.profit:null;
+      const row=(n,f,bold)=>`<tr${bold?' style="background:rgba(56,189,248,.06)"':''}><td>${bold?'<b>'+n+'</b>':n}</td><td>${fmt(f(c))}</td><td class="mu">${R.cumLY?pctS(f(c),f(R.cumLY)):'—'}</td><td>${fmt(f(qs))}</td><td class="mu">${R.qp?pctS(f(qs),f(R.qp)):'—'}</td><td class="mu">${R.qLY?pctS(f(qs),f(R.qLY)):'—'}</td></tr>`;
+      h=`<div class="row" style="flex-wrap:wrap;gap:8px"><select onchange="repSel=+this.value;openWin('report')" style="font-size:15px;font-weight:700">${RS.map((x,i)=>`<option value="${i}" ${x===R?'selected':''}>${x.label}</option>`).join('')}</select>
+      <label class="mu" style="font-size:12px"><input type="checkbox" ${G.autoReport!==false?'checked':''} onchange="G.autoReport=this.checked"> 每季发布时自动弹出</label></div>
+      <div class="kpis">${[['本期累计营收',fmt(REV(c)),R.cumLY?'同比 '+pctS(REV(c),REV(R.cumLY)):''],['本期累计净利润',fmt(c.profit),R.cumLY?'同比 '+pctS(c.profit,R.cumLY.profit):'',c.profit>=0?'pos':'neg'],['单季净利润',fmt(qs.profit),R.qp?'环比 '+pctS(qs.profit,R.qp.profit):'',qs.profit>=0?'pos':'neg'],['毛利率',REV(c)?(GP(c)/REV(c)*100).toFixed(1)+'%':'—','净利率 '+(REV(c)?(c.profit/REV(c)*100).toFixed(1)+'%':'—')],['每股收益',(c.profit/SHARES).toFixed(2),'股价 '+R.sp.toFixed(1)+'（本季 '+pctS(R.sp,R.sp0)+'）'],['净资产',fmt(R.nw),'资产负债率 '+(R.debt*100).toFixed(0)+'%']].map(([n,v,s2,cls])=>`<div class="kpi"><span>${n}</span><b class="${cls||''}">${v}</b><small>${s2}</small></div>`).join('')}</div>
+      <div class="card"><h4>📑 主要财务数据</h4><table><tr><th>项目</th><th>本期累计（1–${R.q*3+3} 月）</th><th>同比</th><th>第 ${R.q+1} 季度</th><th>环比</th><th>同比</th></tr>
+      ${row('营业收入',REV,1)}${row('　零售收入',x=>x.rev)}${row('　互联网收入',x=>x.net)}${row('　租金收入',x=>x.rent)}${row('营业成本',x=>x.purch)}${row('毛利',GP,1)}${row('期间费用',x=>x.op+(x.sal||0)+(x.logi||0)+x.ad)}${row('营业利润',OP,1)}${row('财务费用净额',x=>x.int-x.dep)}${row('所得税',x=>x.tax||0)}${row('净利润',PF,1)}</table></div>
+      <div class="mgrid"><div class="card"><h4>🏢 子公司业绩（本期累计）</h4>${R.subs.length?R.subs.map(x=>`<div class="row"><span>${x.ic} ${x.n}</span><span class="mu">营收 ${fmt(x.rev)}</span><b class="${x.profit>=0?'pos':'neg'}">${fmt(x.profit)}</b></div>`).join(''):'<div class="mu">暂无</div>'}</div>
+      <div class="card"><h4>🔻 本季亏损建筑</h4>${R.loss.length?R.loss.map(x=>`<div class="row" style="cursor:pointer" onclick="goTo(${x.id})"><span>${x.n}</span><b class="neg">${fmt(x.p)}</b></div>`).join(''):'<div class="pos">本季没有亏损的建筑 👍</div>'}<h4 style="margin-top:8px">🏆 本季最赚钱</h4>${R.win.map(x=>`<div class="row" style="cursor:pointer" onclick="goTo(${x.id})"><span>${x.n}</span><b class="pos">${fmt(x.p)}</b></div>`).join('')||'<div class="mu">—</div>'}</div>
+      <div class="card"><h4>📈 本季价格变动（较上季末）</h4>${R.chg.length?R.chg.map(x=>`<div class="row"><span>${P[x.p].ic} ${P[x.p].n}${x.mine?' <span class="tag">你在用</span>':''}</span><b class="${x.r>0?'neg':'pos'}">${x.r>0?'▲':'▼'}${(Math.abs(x.r)*100).toFixed(1)}%</b></div>`).join(''):'<div class="mu">价格平稳</div>'}</div>
+      <div class="card"><h4>👔 人事变动</h4>${R.hr.length?R.hr.map(x=>`<div class="neg">😢 ${x}</div>`).join(''):'<div class="mu">本季无人离职</div>'}<h4 style="margin-top:8px">⚔️ 竞争</h4>${R.wars.length?`<div class="neg">交战中：${R.wars.join('、')}</div>`:'<div class="mu">没有商战</div>'}${R.noco.length?`<div class="neg">对你不配合：${R.noco.join('、')}</div>`:''}</div>
+      <div class="card"><h4>🌍 本季宏观事件</h4>${R.macro.length?R.macro.map(x=>`<div style="font-size:12px">${x}</div>`).join(''):'<div class="mu">平稳</div>'}</div></div>
+      ${R.pend?`<div class="card dec"><b>📩 有 ${R.pend} 件事等你决策</b> <button class="pri" onclick="openWin('inbox')">去处理</button></div>`:''}
+      <div class="card"><h4>💡 管理层讨论与建议</h4>${R.tips.length?R.tips.map(x=>`<div>· ${x}</div>`).join(''):'<div class="mu">一切正常，继续保持</div>'}</div>`}}
   else if(w==='war'){t='⚔️ 商战与股权联盟';G.wars=G.wars||[];buildWar();const al=G.cos.filter(c2=>!c2.dead&&c2.id!==0);
     const myShare=al.filter(c2=>stake(c2.id,0)>0).map(c2=>({c:c2,s:stake(c2.id,0)}));const myGrp=al.filter(c2=>GRP[c2.id]===GRP[0]);
     h=`<div class="row" style="margin-bottom:6px"><b>🏅 商业信誉 ${(G.rep??60).toFixed(0)}/100</b><span class="mu" style="font-size:12px">信誉越高，签约、求和、拉盟友越容易；撕毁条约 −30</span></div><div class="card mu" style="font-size:12px;line-height:1.7">📜 规则：① A 持有 B ≥30% 股份时，B 无法以任何形式制裁 A（不能宣战、不能跟随盟友、交战时也不能反击）；② A 持有 B ≥51% 时，B 成为控股子公司并纳入合并报表（并表），A 可命令 B 对任何公司开战，B 也会自动加入 A 的所有战争；③ 互相持股 ≥20% 的公司结成股权联盟，盟友会对敌方「不配合」（强度减半）；④ 同城卖同类商品的公司会积累敌意，敌意过深时会主动开战。<br>⚔️ 商战手段：断供（停止公司间批发供货）、价格战（客流 −6%/每级强度）、负面公关（品牌受损）、砸盘（股价承压）、挖角高管。发起方每级强度每天花费约 ¥5000。</div>
@@ -1470,7 +1536,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
     <b>物流</b>：商品从工厂/仓库运到门店按距离收运费，跨城市更贵；建「📦 仓库/物流中心」可降低运往该城市的运费并提高库存上限。门店会显示货源：自产、别家供应商（B2B）或进口。<br>
     <b>难度</b>：开局可选对手能力（简单/普通/困难）；所有公司都受「规模不经济」影响——建筑越多，管理成本系数越高（看板可查）。<br>
     <b>剧本</b>：开始界面可选「深圳渔村起家」「老国企改制」「2008 金融危机抄底」「互联网创业」「浦东地产大亨」5 个限时剧本。<b>看板</b>：一页查看核心指标、各城份额与对手雷达对比。<br>
-    <b>月报与通知</b>：每月自动生成经营月报（可关闭自动弹出）；所有消息收进「🔔 通知」，需要你拍板的事项会出现在「📩 待决策」。<br>
+    <b>财报与通知</b>：每季度末发布一季报、半年报、三季报、年报（累计 + 单季，含同比环比，可在「📑 财报」回看历史），每月另有经营简讯；「财务 → 利润表」可切换月度/季度/年度；所有消息收进「🔔 通知」，需要你拍板的事项会出现在「📩 待决策」。<br>
     <b>商战</b>：持股 ≥30% 的公司无法被对方制裁；≥51% 控股并表（纳入合并报表）、可指挥对方开战，也可选择吸收合并；互相持股 ≥20% 结成联盟。商战手段包括断供、价格战、负面公关、砸盘、挖角。见「⚔️ 商战」。<br>
     <b>人才</b>：「👔 人才」里可以聘请 6 类高管（零售/营销/技术/运营/财务/地产总监），他们提供加成并可自动定价、自动研发、自动选产品、自动还贷、自动调租；还可以设置全员薪资政策。<br>
     <b>拆迁</b>：点击地图上的居民楼可以支付补偿费拆迁；建造时直接选在居民楼上也会自动拆迁（橙色框）。拆迁会减少城市住房容量。<br>
@@ -1478,7 +1544,11 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
     <b>5. 互联网</b>：1993 年起陆续开放，建互联网公司 + 数据中心。<br>
     <b>6. 对手</b>：15 位虚构创业者各有开局资产和扩张偏好：实业家先建工厂、地产商先囤地、互联网派先做网站……<br>
     <b>7. 股市</b>：买卖任意对手股票，持股 51% 可收购。<br><b>8. 卡顿？</b>点 ⚙️ 切到「流畅」。</div>`}
-  $('#mt').textContent=t;$('#mb').innerHTML=h;if(refresh)$('#mb').scrollTop=st}
+  $('#mt').textContent=t;$('#mb').innerHTML=h;renderNav(w);if(refresh)$('#mb').scrollTop=st}
+const NAV=[['概览',[['dash','📊','看板'],['report','📑','财报'],['inbox','🔔','通知']]],['经营',[['market','🛒','市场'],['re','🏠','地产'],['net','🌐','互联网'],['research','🔬','研发'],['hr','👔','人才']]],['资本',[['finance','💼','财务'],['stock','📈','股市'],['war','⚔️','商战'],['rank','🏆','排行']]],['环境',[['macro','🌍','宏观']]],['系统',[['settings','⚙️','设置'],['help','❔','帮助']]]];
+function renderNav(w){const el=$('#wnav');if(!el)return;if(!G){el.innerHTML='';el.classList.add('hidden');return}el.classList.remove('hidden');const unread=(G.inbox||[]).filter(x=>!x.read).length+(G.pend||[]).length;
+  el.innerHTML=NAV.map(([g,items])=>`<div class="ng">${g}</div>`+items.map(([k,i,n])=>`<button class="nb ${k===w?'on':''}" onclick="openWin('${k}')"><span>${i}</span>${n}${k==='inbox'&&unread?`<em>${unread>99?'99+':unread}</em>`:''}</button>`).join('')).join('');
+  const on=el.querySelector('.nb.on');if(on&&MOBILE)on.scrollIntoView({inline:'center',block:'nearest'})}
 window.openWin=openWin;window.updBadge=updBadge;
 window.ibOpen=i=>{const x=G.inbox[i];if(!x)return;x.read=true;updBadge();if(x.cat==='report')openWin('report');else if(x.cat==='war'||x.cat==='dip')openWin('war');else if(x.cat==='hr')openWin('hr');else if(x.cat==='macro')openWin('macro');else openWin('inbox',true)};
 window.proposePact=(id,gift)=>{const me=G.cos[0],o=G.cos[id],cost=gift?sharePrice(o)*SHARES*0.01:0;if(gift&&me.cash<cost){toast('资金不足');return}const pr=clamp((relOf(0,id)+60)/200+(G.rep??60)/250+(gift?0.35:0),0.03,0.95);if(gift){me.cash-=cost;o.cash+=cost}
@@ -1552,7 +1622,7 @@ function load(){try{const s=localStorage.getItem(SKEY);if(!s)return false;G=JSON
 $('#btn-save').onclick=()=>{setTab='save';openWin('settings')};
 const autoSave=()=>{if(G&&!G.over)try{localStorage.setItem(SKEY,ser());localStorage.setItem(SKEY+'-meta',JSON.stringify(metaOf()))}catch(e){}};
 setInterval(autoSave,60000);document.addEventListener('visibilitychange',()=>{if(document.hidden)autoSave()});addEventListener('pagehide',autoSave);
-function gameOver(){G.over=true;setSpeed(0);$('#mt').textContent='💀 公司破产';$('#mb').innerHTML=`<p>连续 90 天资不抵债，${G.cos[0].name}宣告破产。</p><button class="pri" onclick="location.reload()">重新开始</button>`;$('#modal').classList.remove('hidden')}
+function gameOver(){G.over=true;setSpeed(0);$('#wnav').classList.add('hidden');$('#mt').textContent='💀 公司破产';$('#mb').innerHTML=`<p>连续 90 天资不抵债，${G.cos[0].name}宣告破产。</p><button class="pri" onclick="location.reload()">重新开始</button>`;$('#modal').classList.remove('hidden')}
 const opt={ai:1,scn:'free',rename:{},macro:1,diff:1,perk:'sales',home:0,pkg:'retail',picks:['spark','aurora','hongyuan','yunfan','dingsheng','jinsui']};
 function optBtns(sel,key,entries){$(sel).innerHTML=entries.map(([k,lab,sub])=>`<button data-k="${k}" class="${String(opt[key])===String(k)?'on':''}">${lab}${sub?`<small>${sub}</small>`:''}</button>`).join('');
   document.querySelectorAll(sel+' button').forEach(b=>b.onclick=()=>{opt[key]=typeof opt[key]==='number'?+b.dataset.k:b.dataset.k;optBtns(sel,key,entries)})}

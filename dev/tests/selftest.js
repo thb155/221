@@ -59,6 +59,13 @@
       const sz=()=>G.b.filter(b=>b.o!==0).length+G.cos.reduce((x,c)=>x+(c.ai&&!c.dead?PK.reduce((y,p)=>y+c.tech[p],0):0),0);
       fresh({ai:0});run(365*3);const e=sz();fresh({ai:2});run(365*3);const h=sz();return h>e||`简单 ${e} vs 困难 ${h}`;
     });
+    T('季度财报：一季报/半年报/三季报/年报按时发布', () => {
+      fresh();run(365*2+5);const ks=(G.reports||[]).map(r=>r.kind);if(ks.length<7)return '财报数量 '+ks.length;
+      for(const k of ['一季报','半年报','三季报','年报'])if(!ks.includes(k))return '缺少 '+k;
+      const r=G.reports.find(x=>x.kind==='年报'&&x.cumLY);if(!r)return '第二年年报缺少同比';
+      const sumP=G.cos[0].months.filter(m=>mYear(m)===r.y).reduce((x,m)=>x+m.profit,0);return Math.abs(sumP-r.cum.profit)<1||`年报利润 ${r.cum.profit} ≠ 月度合计 ${sumP}`;
+    });
+    T('利润表月度/季度/年度切换', () => { for(const p of ['m','q','y']){finPer=p;finTab='is';openWin('finance')}finPer='m';closeModal();return true; });
     T('所有窗口都能打开', () => {
       fresh(); run(400);
       const ws = ['market', 're', 'net', 'finance', 'research', 'stock', 'rank', 'macro', 'hr', 'war', 'inbox', 'report', 'dash', 'settings', 'help'];

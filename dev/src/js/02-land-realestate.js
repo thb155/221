@@ -33,7 +33,7 @@ const sectOf=t=>t==='wh'?'logi':BT[t].g==='retail'?'retail':(t==='farm'||t==='fo
 const shortN=c=>(c.name.replace(/集团|公司|有限|控股|股份/g,'')||c.name).slice(0,4);
 function ensureSub(c,b,force){c.subs=c.subs||[];if(b.sub&&!force&&c.subs.some(s2=>s2.id===b.sub))return;const sc=sectOf(b.type),id='d_'+sc;
   if(!c.subs.some(s2=>s2.id===id))c.subs.push({id,name:shortN(c)+SECT[sc].n,ic:SECT[sc].ic,sect:sc});b.sub=id}
-const segAcc=(b,k,v)=>{if(b.o!==0)return;const pm=b.pm||(b.pm={rev:0,cogs:0,op:0});pm[k]+=v};
+const segAcc=(b,k,v)=>{if(b.o!==0)return;const pm=b.pm||(b.pm={rev:0,cogs:0,op:0});pm[k]+=v;const pq=b.pq||(b.pq={rev:0,cogs:0,op:0});pq[k]+=v};
 function subMonth(c,label,m){c.subHist=c.subHist||{};const tot={};for(const s2 of c.subs||[])tot[s2.id]={rev:0,cogs:0,op:0,n:0};
   for(const b of G.b){if(b.o!==c.id)continue;ensureSub(c,b);const t=tot[b.sub]||(tot[b.sub]={rev:0,cogs:0,op:0,n:0});const pm=b.pm||{rev:0,cogs:0,op:0};t.rev+=pm.rev;t.cogs+=pm.cogs;t.op+=pm.op;t.n++;b.lm=pm;b.pm={rev:0,cogs:0,op:0}}
   let seg=0;for(const id in tot){const t=tot[id];t.profit=t.rev-t.cogs-t.op;t.label=label;seg+=t.profit;(c.subHist[id]=c.subHist[id]||[]).push(t);if(c.subHist[id].length>36)c.subHist[id].shift()}

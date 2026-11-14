@@ -33,7 +33,7 @@ function load(){try{const s=localStorage.getItem(SKEY);if(!s)return false;G=JSON
 $('#btn-save').onclick=()=>{setTab='save';openWin('settings')};
 const autoSave=()=>{if(G&&!G.over)try{localStorage.setItem(SKEY,ser());localStorage.setItem(SKEY+'-meta',JSON.stringify(metaOf()))}catch(e){}};
 setInterval(autoSave,60000);document.addEventListener('visibilitychange',()=>{if(document.hidden)autoSave()});addEventListener('pagehide',autoSave);
-function gameOver(){G.over=true;setSpeed(0);$('#mt').textContent='💀 公司破产';$('#mb').innerHTML=`<p>连续 90 天资不抵债，${G.cos[0].name}宣告破产。</p><button class="pri" onclick="location.reload()">重新开始</button>`;$('#modal').classList.remove('hidden')}
+function gameOver(){G.over=true;setSpeed(0);$('#wnav').classList.add('hidden');$('#mt').textContent='💀 公司破产';$('#mb').innerHTML=`<p>连续 90 天资不抵债，${G.cos[0].name}宣告破产。</p><button class="pri" onclick="location.reload()">重新开始</button>`;$('#modal').classList.remove('hidden')}
 const opt={ai:1,scn:'free',rename:{},macro:1,diff:1,perk:'sales',home:0,pkg:'retail',picks:['spark','aurora','hongyuan','yunfan','dingsheng','jinsui']};
 function optBtns(sel,key,entries){$(sel).innerHTML=entries.map(([k,lab,sub])=>`<button data-k="${k}" class="${String(opt[key])===String(k)?'on':''}">${lab}${sub?`<small>${sub}</small>`:''}</button>`).join('');
   document.querySelectorAll(sel+' button').forEach(b=>b.onclick=()=>{opt[key]=typeof opt[key]==='number'?+b.dataset.k:b.dataset.k;optBtns(sel,key,entries)})}

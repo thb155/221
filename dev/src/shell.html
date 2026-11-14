@@ -148,6 +148,53 @@ body.m .tabs button{flex:none}
 .badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#f43f5e;color:#fff;font-size:11px;line-height:17px;font-weight:700}
 .ib{display:flex;gap:10px;padding:8px;border-bottom:1px solid var(--bd);cursor:pointer}.ib.u{background:rgba(56,189,248,.07)}.ib .ic{font-size:20px}
 .dec{border-color:rgba(251,191,36,.6)!important}
+
+/* ===== 界面优化 ===== */
+:root{--pan:rgba(12,19,34,.95);--ac2:#38bdf8}
+button{transition:background .15s,border-color .15s,transform .08s}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:2px solid #38bdf8;outline-offset:1px}
+.panel{border-color:rgba(148,163,184,.16);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04)}
+#top .stat{background:rgba(30,41,59,.55);border:1px solid rgba(148,163,184,.1);border-radius:9px;padding:3px 9px}
+#top .tb{display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 9px!important;font-size:17px;line-height:1.1;min-width:48px}
+#top .tb i{font-style:normal;font-size:11px;color:var(--mu)}
+#top .tb:hover i{color:#e2e8f0}
+#top .tb .badge{top:-4px;right:-2px}
+#modal{backdrop-filter:blur(2px)}
+#modal .win{width:min(1180px,96vw);height:88vh;animation:pop .16s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.985)}}
+.wbody{display:flex;flex:1;min-height:0}
+#wnav{width:136px;flex:none;border-right:1px solid var(--bd);padding:8px 6px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+#wnav .ng{font-size:11px;color:var(--mu);letter-spacing:2px;margin:8px 6px 3px}
+#wnav .ng:first-child{margin-top:2px}
+#wnav .nb{display:flex;align-items:center;gap:7px;text-align:left;background:transparent;border:1px solid transparent;padding:7px 8px;position:relative}
+#wnav .nb span{width:20px;text-align:center}
+#wnav .nb:hover{background:rgba(56,189,248,.1)}
+#wnav .nb.on{background:linear-gradient(90deg,rgba(14,165,233,.35),rgba(14,165,233,.08));border-color:rgba(56,189,248,.45);font-weight:700}
+#wnav .nb em{font-style:normal;margin-left:auto;background:#f43f5e;border-radius:9px;padding:0 6px;font-size:11px;font-weight:700}
+#mb{flex:1;min-width:0}
+#mb h4{display:flex;align-items:center;gap:6px;font-size:13px;color:#cbd5e1;letter-spacing:.5px;margin:2px 0 8px}
+.card{transition:border-color .15s}
+.card:hover{border-color:rgba(148,163,184,.3)}
+#mb table{border-collapse:separate;border-spacing:0}
+#mb th{position:sticky;top:-12px;background:#111b2e;z-index:1;border-bottom:1px solid rgba(148,163,184,.25)}
+#mb tr:nth-child(even) td{background:rgba(148,163,184,.035)}
+#mb tr:hover td{background:rgba(56,189,248,.06)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:8px 0}
+.kpi{background:linear-gradient(160deg,#18243a,#121c2e);border:1px solid var(--bd);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column}
+.kpi span{font-size:12px;color:var(--mu)}.kpi b{font-size:19px;margin:2px 0}.kpi small{font-size:11px;color:var(--mu)}
+.toast{border-left:4px solid #38bdf8;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.toast.t-war,.toast.t-hr{border-left-color:#f43f5e}.toast.t-decision{border-left-color:#fbbf24}.toast.t-goal{border-left-color:#22c55e}.toast.t-macro{border-left-color:#a78bfa}.toast.t-report{border-left-color:#38bdf8}.toast.t-dip{border-left-color:#14b8a6}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:rgba(148,163,184,.25);border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+.tabs button.on{box-shadow:0 0 0 1px rgba(56,189,248,.5) inset}
+body.m #top .tb{min-width:44px;font-size:16px}
+body.m .wbody{flex-direction:column}
+body.m #wnav{width:auto;flex-direction:row;border-right:0;border-bottom:1px solid var(--bd);overflow-x:auto;overflow-y:hidden;padding:6px;gap:4px;scrollbar-width:none}
+body.m #wnav::-webkit-scrollbar{display:none}
+body.m #wnav .ng{display:none}
+body.m #wnav .nb{flex:none;padding:7px 10px;font-size:13px}
+body.m #modal .win{height:100%}
+body.m #mb th{position:static}
 </style>
 </head>
 <body>
@@ -155,30 +202,24 @@ body.m .tabs button{flex:none}
 
 <div id="top" class="panel">
   <div class="stat"><span id="cname">公司</span><b id="s-cash">¥0</b></div>
-  <div class="stat"><span>净资产</span><b id="s-nw">¥0</b></div>
-  <div class="stat"><span>本月利润</span><b id="s-pf">¥0</b></div>
-  <div class="stat"><span>日期</span><b id="s-date">-</b></div>
+  <div class="stat"><span>📈 净资产</span><b id="s-nw">¥0</b></div>
+  <div class="stat"><span>💰 本月利润</span><b id="s-pf">¥0</b></div>
+  <div class="stat"><span>📅 日期</span><b id="s-date">-</b></div>
   <div class="stat" id="s-macro" data-w="macro" style="cursor:pointer"><span id="s-rate">利率 4.50%</span><b id="s-mev">🌍</b></div>
   <div class="grp spd" id="spd"><button data-s="0" title="暂停 (空格)">⏸</button><button data-s="1">▶</button><button data-s="2">⏩</button><button data-s="3">⏭</button></div>
   <div id="menu">
   <div class="grp" id="cities"></div>
   <div class="sep"></div>
-  <button data-w="macro">🌍 宏观</button>
-  <button data-w="market">📊 市场</button>
-  <button data-w="re">🏠 地产</button>
-  <button data-w="net">🌐 互联网</button>
-  <button data-w="inbox" id="btn-inbox" style="position:relative">🔔 通知<span id="ibadge" class="badge hidden">0</span></button>
-  <button data-w="dash">📊 看板</button>
-  <button data-w="report">📋 月报</button>
-  <button data-w="war">⚔️ 商战</button>
-  <button data-w="hr">👔 人才</button>
-  <button data-w="finance">💼 财务</button>
-  <button data-w="research">🔬 研发</button>
-  <button data-w="stock">📈 股市</button>
-  <button data-w="rank">🏆 排行</button>
-  <button data-w="settings" title="设置：存档读档、画质">⚙️ 设置</button>
-  <button data-w="help">❔</button>
-  <button id="btn-save" title="存档 / 读档">💾 存档</button>
+  <button data-w="dash" class="tb">📊<i>看板</i></button>
+  <button data-w="report" class="tb">📑<i>财报</i></button>
+  <button data-w="market" class="tb">🛒<i>市场</i></button>
+  <button data-w="finance" class="tb">💼<i>财务</i></button>
+  <button data-w="stock" class="tb">📈<i>股市</i></button>
+  <button data-w="war" class="tb">⚔️<i>商战</i></button>
+  <button data-w="inbox" id="btn-inbox" class="tb" style="position:relative">🔔<i>通知</i><span id="ibadge" class="badge hidden">0</span></button>
+  <button data-w="dash" class="tb more" title="全部功能：地产、互联网、研发、人才、排行、宏观……">☰<i>全部</i></button>
+  <button data-w="settings" class="tb" title="设置：存档读档、画质、音效">⚙️<i>设置</i></button>
+  <button id="btn-save" class="tb" title="存档 / 读档">💾<i>存档</i></button>
   </div>
 </div>
 
@@ -191,7 +232,7 @@ body.m .tabs button{flex:none}
 <div id="heat" class="panel"><span class="mu" style="padding:0 4px">热力图</span><button data-h="0" class="on">关</button><button data-h="1">人口</button><button data-h="2">地价</button></div>
 <canvas id="mini" class="panel" width="160" height="90"></canvas>
 <div id="tip" class="hidden"></div>
-<div id="modal" class="hidden"><div class="win panel"><div class="win-h"><span id="mt"></span><button id="mx">✕</button></div><div id="mb"></div></div></div>
+<div id="modal" class="hidden"><div class="win panel"><div class="win-h"><span id="mt"></span><button id="mx">✕</button></div><div class="wbody"><nav id="wnav"></nav><div id="mb"></div></div></div></div>
 <div id="toasts"></div>
 
 <div id="start">

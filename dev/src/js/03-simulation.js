@@ -111,21 +111,37 @@ function simDay(){
 function checkTech(c,p){while(c.rp[p]>=techNeed(c.tech[p])){c.rp[p]-=techNeed(c.tech[p]);c.tech[p]++;
   if(c.id===0)toast(`🔬 ${ic(p)} ${nm(p)} 技术 Lv${c.tech[p]}${NET[p]&&c.tech[p]===1?'，产品正式上线！':''}`);
   else if(NET[p]&&c.tech[p]===1)addNews(`${c.av} ${c.founder}：${c.name}旗下「${NET[p].n}」正式上线`)}}
-function buildReport(d){const me=G.cos[0],m=me.months[me.months.length-1],pv=me.months[me.months.length-2];if(!m)return;
+const QN=['一季报','半年报','三季报','年报'];
+const sumM=(arr)=>{const o={rev:0,net:0,rent:0,whole:0,purch:0,op:0,sal:0,logi:0,ad:0,int:0,dep:0,tax:0,profit:0};for(const m of arr)for(const k in o)o[k]+=m[k]||0;return o};
+const mYear=m=>+String(m.label).split('.')[0],mMon=m=>+String(m.label).split('.')[1];
+function buildReport(d){const me=G.cos[0],m=me.months[me.months.length-1];if(!m)return;const mo=d.getUTCMonth(),y=d.getUTCFullYear();
+  notify('report',`${m.label} 经营简讯`,`当月净利润 ${fmt(m.profit)}`,false);
+  if(mo%3!==2)return;const q=Math.floor(mo/3);
   const lab=(b)=>`${BT[b.type].ic}${BT[b.type].n}${isRetail(b)?'('+b.slots.map(x=>P[x.p].ic).join('')+')':b.prod?'('+ic(b.prod)+')':''}·${G.cities[b.c].n}`;
-  const bs=G.b.filter(b=>b.o===0&&b.lm).map(b=>({b,p:b.lm.rev-b.lm.cogs-b.lm.op}));const loss=bs.filter(x=>x.p<0).sort((a,b)=>a.p-b.p).slice(0,5),win=bs.filter(x=>x.p>0).sort((a,b)=>b.p-a.p).slice(0,3);
-  G.impPrev=G.impPrev||{};const mine=new Set();G.b.forEach(b=>{if(b.o===0&&b.type==='factory'&&b.prod)Object.keys(P[b.prod].inp).forEach(k=>mine.add(k));if(b.o===0&&isRetail(b))b.slots.forEach(x=>mine.add(x.p))});
-  const chg=PK.map(p=>({p,r:G.impPrev[p]?G.imp[p]/G.impPrev[p]-1:0,mine:mine.has(p)})).filter(x=>Math.abs(x.r)>=0.04).sort((a,b)=>(b.mine-a.mine)||Math.abs(b.r)-Math.abs(a.r)).slice(0,6);PK.forEach(p=>G.impPrev[p]=G.imp[p]);
-  const tips=[];if(me.cash<(m.op||0)*0.5)tips.push('现金不足半个月运营成本，注意资金链');const TA=Math.max(1,baseNW(me)+me.loan);if(me.loan/TA>0.5)tips.push(`资产负债率 ${(me.loan/TA*100).toFixed(0)}%，偏高`);
+  const inY=(yy,from,to)=>me.months.filter(x=>mYear(x)===yy&&mMon(x)>=from&&mMon(x)<=to);
+  const cum=sumM(inY(y,1,mo+1)),cumLY=sumM(inY(y-1,1,mo+1)),qs=sumM(inY(y,mo-1,mo+1)),qp=q>0?sumM(inY(y,mo-4,mo-2)):sumM(inY(y-1,10,12)),qLY=sumM(inY(y-1,mo-1,mo+1));
+  const hasLY=inY(y-1,1,mo+1).length>0,hasQP=(q>0?inY(y,mo-4,mo-2):inY(y-1,10,12)).length>0;
+  const bs=G.b.filter(b=>b.o===0&&b.pq).map(b=>({b,p:b.pq.rev-b.pq.cogs-b.pq.op,r:b.pq.rev}));const loss=bs.filter(x=>x.p<0).sort((a,b)=>a.p-b.p).slice(0,6),win=bs.filter(x=>x.p>0).sort((a,b)=>b.p-a.p).slice(0,5);
+  G.b.forEach(b=>{if(b.o===0)b.pq={rev:0,cogs:0,op:0}});
+  const SH=me.subHist||{},subs=(me.subs||[]).map(s2=>{const a2=(SH[s2.id]||[]).filter(x=>mYear(x)===y&&mMon(x)<=mo+1);return{n:s2.name,ic:s2.ic,rev:a2.reduce((x,z)=>x+z.rev,0),profit:a2.reduce((x,z)=>x+z.profit,0)}}).filter(x=>x.rev||x.profit).sort((a,b)=>b.profit-a.profit);
+  G.impQ=G.impQ||{};const mine=new Set();G.b.forEach(b=>{if(b.o===0&&b.type==='factory'&&b.prod)Object.keys(P[b.prod].inp).forEach(k=>mine.add(k));if(b.o===0&&isRetail(b))b.slots.forEach(x=>mine.add(x.p))});
+  const chg=PK.map(p=>({p,r:G.impQ[p]?G.imp[p]/G.impQ[p]-1:0,mine:mine.has(p)})).filter(x=>Math.abs(x.r)>=0.05).sort((a,b)=>(b.mine-a.mine)||Math.abs(b.r)-Math.abs(a.r)).slice(0,8);PK.forEach(p=>G.impQ[p]=G.imp[p]);
+  const qStart=Date.UTC(y,mo-2,1),macro=(G.mlog||[]).filter(x=>x.t>=qStart).map(x=>MDEF(x.k).ic+' '+x.txt);
+  const tips=[];const TA=Math.max(1,baseNW(me)+me.loan);if(me.cash<(m.op||0)*0.5)tips.push('现金不足半个月运营成本，注意资金链');if(me.loan/TA>0.5)tips.push(`资产负债率 ${(me.loan/TA*100).toFixed(0)}%，偏高`);
   G.b.forEach(b=>{if(b.o===0&&isRetail(b)&&b.slots.some(x=>x.sold>=BT[b.type].cap*lvMul(b.lv)*0.95))tips.push(`${lab(b)} 已满负荷，考虑扩建或提价`)});
   for(const p in GENP)if(me.inv[p].q>0&&techQ(me.tech[p])<qrefOf(p))tips.push(`${P[p].ic}${P[p].n} 自产品质落后当代基准 ${qrefOf(p)}，需加紧研发`);
-  if((m.logi||0)>REVof(m)*0.04)tips.push(`物流费用占营收 ${((m.logi||0)/Math.max(1,REVof(m))*100).toFixed(1)}%，考虑在主要销售城市建仓库`);
+  if((qs.logi||0)>REVof(qs)*0.04)tips.push(`物流费用占营收 ${((qs.logi||0)/Math.max(1,REVof(qs))*100).toFixed(1)}%，考虑在主要销售城市建仓库`);
   for(const r in ROLES){const e=(me.ex||{})[r];if(e&&e.sal<marketSal(e.skill,e.trait)*0.85)tips.push(`${ROLES[r].n} ${e.name} 薪资明显低于市场价，有被挖风险`)}
+  if(scaleF(me)>1.15)tips.push(`管理成本系数 ×${scaleF(me).toFixed(2)}，可出售低效建筑以降低规模不经济`);
   const wars=(G.wars||[]).filter(w=>w.a===0||w.b===0).map(w=>G.cos[w.a===0?w.b:w.a].name),noco=[];for(const [k] of WH)if(k%100===0&&!wars.includes(G.cos[Math.floor(k/100)].name))noco.push(G.cos[Math.floor(k/100)].name);
-  const R={label:m.label,profit:m.profit,prev:pv?pv.profit:null,rev:REVof(m),cash:me.cash,nw:netWorth(me),loss:loss.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),win:win.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),
-    chg:chg.map(x=>({p:x.p,r:x.r,mine:x.mine})),hr:G.mlogHR||[],wars,noco:[...new Set(noco)],macro:(G.mev||[]).map(e=>MDEF(e.k).ic+MDEF(e.k).n),pend:(G.pend||[]).length,tips:tips.slice(0,6)};
-  G.mlogHR=[];G.report=R;notify('report',`${m.label} 经营月报`,`净利润 ${fmt(m.profit)}${loss.length?`，${loss.length} 处亏损`:''}${chg.filter(x=>x.mine&&x.r>0).length?'，原料涨价':''}`,false);
+  const ph=me.ph||[],sp=sharePrice(me),sp0=ph.length>13?ph[ph.length-14]:ph[0]||sp;
+  const R={kind:QN[q],y,q,label:`${y} 年${QN[q]}`,cum,cumLY:hasLY?cumLY:null,qs,qp:hasQP?qp:null,qLY:hasLY?qLY:null,cash:me.cash,loan:me.loan,nw:netWorth(me),debt:me.loan/TA,sp,sp0,
+    loss:loss.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),win:win.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),subs,chg,hr:G.mlogHR||[],wars,noco:[...new Set(noco)],macro,pend:(G.pend||[]).length,tips:tips.slice(0,8)};
+  G.mlogHR=[];G.report=R;G.reports=G.reports||[];G.reports.unshift(R);if(G.reports.length>24)G.reports.length=24;repSel=0;
+  notify('report',`📑 ${R.label}发布`,`本期累计净利润 ${fmt(cum.profit)}${hasLY?`，同比 ${pctS(cum.profit,cumLY.profit)}`:''}${loss.length?`，${loss.length} 处亏损`:''}`,true);
   if(G.autoReport!==false&&!curWin){openWin('report')}}
+const pctS=(a,b)=>{if(b==null||!isFinite(b)||Math.abs(b)<1)return'—';const r=(a-b)/Math.abs(b)*100;return(r>=0?'+':'')+r.toFixed(1)+'%'};
+let repSel=0;
 const REVof=r=>r.rev+r.net+r.rent+r.whole;
 function monthEnd(d){
   scnCheck();renderGoal();

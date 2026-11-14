@@ -1,5 +1,5 @@
 /* ================= UI ================= */
-function toast(t){const d=document.createElement('div');d.className='toast';d.innerHTML=t;$('#toasts').appendChild(d);setTimeout(()=>d.remove(),MOBILE?2600:3200);while($('#toasts').children.length>(MOBILE?2:4))$('#toasts').firstChild.remove()}
+function toast(t,kind){const d=document.createElement('div');d.className='toast'+(kind?' t-'+kind:'');d.innerHTML=t;$('#toasts').appendChild(d);setTimeout(()=>d.remove(),MOBILE?2600:3200);while($('#toasts').children.length>(MOBILE?2:4))$('#toasts').firstChild.remove()}
 function addNews(t){const d=new Date(G.date);G.news.unshift(`[${d.getUTCFullYear()}/${d.getUTCMonth()+1}] ${t}`);G.news=G.news.slice(0,50);$('#news').textContent=G.news[0]}
 function setSpeed(s){speed=s;document.querySelectorAll('#spd button').forEach(b=>b.classList.toggle('on',+b.dataset.s===s))}
 document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.s));

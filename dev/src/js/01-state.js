@@ -47,7 +47,7 @@ function scnCheck(){const sc=SCN[G.scn];if(!sc||!sc.win||G.scnDone)return;const 
   if(sc.win(me)){G.scnDone='win';notify('goal',`🏆 剧本胜利：${sc.n}`,sc.goal,true);openScnEnd(true)}
   else if(y>sc.deadline){G.scnDone='lose';notify('goal',`剧本失败：${sc.n}`,'未在期限内达成目标，可继续自由游玩',true);openScnEnd(false)}
   for(const [m,k] of sc.force||[])if(G.day>=m*30&&!(G.scnF||{})[k]){(G.scnF=G.scnF||{})[k]=1;startMacro(k)}}
-function openScnEnd(win){const sc=SCN[G.scn];setSpeed(0);curWin='scn';$('#modal').classList.remove('hidden');$('#mt').textContent=win?'🏆 剧本胜利':'⌛ 剧本结束';
+function openScnEnd(win){const sc=SCN[G.scn];setSpeed(0);curWin='scn';$('#modal').classList.remove('hidden');$('#wnav').classList.add('hidden');$('#mt').textContent=win?'🏆 剧本胜利':'⌛ 剧本结束';
   $('#mb').innerHTML=`<div style="text-align:center;padding:20px"><div style="font-size:54px">${win?'🏆':'⌛'}</div><h2>${sc.ic} ${sc.n}</h2><p>${win?'恭喜！你达成了目标：':'很遗憾，未能在期限内达成：'}${sc.goal}</p><p class="mu">用时 ${(G.day/365).toFixed(1)} 年 · 最终净资产 ${fmt(netWorth(G.cos[0]))}</p><button class="pri" onclick="closeModal();setSpeed(1)">继续自由经营</button> <button onclick="location.reload()">返回主菜单</button></div>`}
 function newGame(o){const sc=SCN[o.scn||'free']||SCN.free;if(sc.home!=null)o.home=sc.home;window.__aiLv=o.ai??1;
   G={aiLv:o.ai??1,ver:4,scn:o.scn||'free',day:0,date:Date.UTC(sc.year||1990,0,1),qm:50,imp:{},cities:CITY_DEF.map(genCity),cur:o.home,b:[],nid:1,cos:[],hold:{},cost:{},goal:0,news:[],over:false,adopt:0,netU:{},auctions:[]};

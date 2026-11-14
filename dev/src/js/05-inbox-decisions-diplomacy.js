@@ -1,6 +1,6 @@
 /* ===== 通知中心 ===== */
 const NCAT={report:'📋',decision:'📩',war:'⚔️',hr:'👔',macro:'🌍',goal:'🎯',biz:'💡',dip:'🤝'};
-function notify(cat,title,body,pop){if(pop&&G.day>2)sfx(cat==='war'||cat==='decision'||cat==='hr'?'alert':cat==='goal'?'good':'click');G.inbox=G.inbox||[];G.inbox.unshift({t:G.date,cat,title,body:body||'',read:false});if(G.inbox.length>120)G.inbox.length=120;updBadge();if(pop)toast(`${NCAT[cat]||'🔔'} <b>${title}</b>${body&&!MOBILE?'<br><span class="mu">'+String(body).replace(/<[^>]+>/g,'').slice(0,60)+'</span>':''}`)}
+function notify(cat,title,body,pop){if(pop&&G.day>2)sfx(cat==='war'||cat==='decision'||cat==='hr'?'alert':cat==='goal'?'good':'click');G.inbox=G.inbox||[];G.inbox.unshift({t:G.date,cat,title,body:body||'',read:false});if(G.inbox.length>120)G.inbox.length=120;updBadge();if(pop)toast(`${NCAT[cat]||'🔔'} <b>${title}</b>${body&&!MOBILE?'<br><span class="mu">'+String(body).replace(/<[^>]+>/g,'').slice(0,60)+'</span>':''}`,cat)}
 function updBadge(){const n=(G&&G.inbox||[]).filter(x=>!x.read).length+(G&&G.pend||[]).length;const el=$('#ibadge');if(!el)return;el.textContent=n>99?'99+':n;el.classList.toggle('hidden',!n)}
 /* ===== 临时状态 ===== */
 const buffOn=k=>G.buff&&G.buff[k]&&G.buff[k]>G.day;
