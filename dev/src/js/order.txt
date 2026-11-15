@@ -11,5 +11,6 @@
 09-mainloop.js
 10-input.js
 11-ui-panels.js
+11a-build-preview.js
 12-windows.js
 13-save-boot.js

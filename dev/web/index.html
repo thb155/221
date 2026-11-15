@@ -99,6 +99,22 @@ button{touch-action:manipulation}
 #build,#side{top:calc(var(--toph,50px) + 16px)}
 #side{max-height:calc(100% - var(--toph,50px) - 16px - 52px)}
 #mini,#heat{transition:right .2s ease}
+#bprev{position:fixed;left:192px;top:calc(var(--toph,50px) + 16px);width:370px;max-height:calc(100% - var(--toph,50px) - 16px - 60px);overflow:auto;padding:10px 12px;z-index:5;font-size:12px}
+#bprev.mini{width:auto;padding:4px}#bprev .pv-open{padding:6px 10px;font-size:12px}
+#bprev .pv-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+#bprev .gx{width:24px;height:24px;padding:0;border-radius:6px;flex:none}
+#bprev .pv-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+#bprev .pv-kpis>div{background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.15);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column;gap:2px}
+#bprev .pv-kpis b{font-size:15px}#bprev .pv-kpis span{font-size:10.5px;color:var(--mu,#94a3b8);line-height:1.3}
+#bprev .row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed rgba(148,163,184,.12)}
+#bprev .pv-t{width:100%;font-size:11.5px}#bprev .pv-t th,#bprev .pv-t td{padding:3px 4px;white-space:nowrap}
+#bprev .pv-tip{font-size:11px;margin-top:6px;line-height:1.5}
+@media (max-width:1000px){#bprev{left:166px;width:320px}}
+body.m #bprev{left:calc(env(safe-area-inset-left) + 6px);right:calc(env(safe-area-inset-right) + 6px);width:auto;top:calc(env(safe-area-inset-top) + var(--toph,90px) + 8px);max-height:34vh;z-index:8}
+body.m #bprev.mini{right:auto}
+body.bprev:not(.m) #toasts{left:calc(50% + 200px)}
+body.m.bprev #toasts{top:calc(env(safe-area-inset-top) + var(--toph,90px) + 34vh + 18px)}
+body.m #bprev .pv-kpis b{font-size:13px}body.m #bprev .pv-kpis span{font-size:10px}body.m #bprev{font-size:11.5px}
 body.sideopen:not(.m) #mini,body.sideopen:not(.m) #heat{right:336px}
 @media (max-width:1000px){body.sideopen:not(.m) #mini,body.sideopen:not(.m) #heat{right:286px}}
 .mob{display:none!important}
@@ -245,6 +261,7 @@ body.m #mb th{position:static}
 <button id="fab" onclick="toggleBuild()">🏗️</button>
 <div id="bconf" class="panel hidden"><div id="bconf-t" style="flex:1"></div><button class="pri" id="bconf-ok">确认建造</button><button id="bconf-no">取消</button></div>
 <div id="side" class="panel hidden"></div>
+<div id="bprev" class="panel hidden"></div>
 <div id="ticker" class="panel"><span class="lab">📰 快讯</span><span id="news">欢迎来到资本帝国实验室。</span></div>
 <div id="heat" class="panel"><span class="mu" style="padding:0 4px">热力图</span><button data-h="0" class="on">关</button><button data-h="1">人口</button><button data-h="2">地价</button></div>
 <canvas id="mini" class="panel" width="160" height="90"></canvas>
@@ -680,7 +697,7 @@ function simDay(){
     ensureGrid(city);const cap=city.dcap+sa*25,jobs=biz*150+soc*20+city.pop*0.3,attr=clamp(jobs/(city.pop*0.45),0.6,1.4);
     city.cap=cap;city.attr=attr;city.biz=biz;city.pop+=(cap*0.97-city.pop)*(city.pop<cap*0.97?0.006*attr:0.002)+city.pop*city.g*0.3;
     const ten=Math.max(0,city.pop-city.dcap*0.9)/25,od=30+biz*6+city.pop/2000;
-    reS[city.id]={fa:sa?clamp(ten/sa*1.05*MM.apt,0.15,1.1):1.1,fo:so?clamp(od/so*MM.office,0.15,1.1):1.1,sa,so};city.re=reS[city.id]}
+    reS[city.id]={fa:sa?clamp(ten/sa*1.05*MM.apt,0.15,1.1):1.1,fo:so?clamp(od/so*MM.office,0.15,1.1):1.1,sa,so,ten,od};city.re=reS[city.id]}
   for(const b of bs){
     const c=G.cos[b.o];const op=opCost(b)*wageOp(c)*(1-0.15*exS(c,'coo'))*scaleF(c);c.cash-=op;c.m.op+=op;segAcc(b,'op',op);b.out=0;
     if(isRetail(b)||b.type==='dc'||b.type==='land')continue;
@@ -1293,7 +1310,7 @@ $('#mini').addEventListener('click',e=>{const r=e.target.getBoundingClientRect()
   const a=(mx-MOX)/MS,b=(my-MOY)/(MS*0.5),gx=(a+b)/2,gy=(b-a)/2;const [ix,iy]=iso(gx,gy);cam.x=VW/2-ix*cam.z;cam.y=VH/2-iy*cam.z});
 
 /* ================= 主循环 ================= */
-const SPD=[0,1,4,12];let lastT=performance.now(),lastFrame=0,lastUI=0,lastPanel=0,lastMini=0,uiDirty=false,pausedKey='';
+const SPD=[0,1,4,12];let lastT=performance.now(),lastFrame=0,lastUI=0,lastPanel=0,lastMini=0,uiDirty=false,pausedKey='',lastPrev=0;
 function loop(t){requestAnimationFrame(loop);
   const fps=[24,30,60][Q];if(t-lastFrame<1000/fps-2)return;lastFrame=t;
   const dt=Math.min(0.15,(t-lastT)/1000);lastT=t;T+=dt;
@@ -1302,6 +1319,7 @@ function loop(t){requestAnimationFrame(loop);
     for(const s of smoke){s.x+=s.vx;s.y+=s.vy;s.r+=0.05;s.life-=dt*0.5}if(smoke.length)smoke=smoke.filter(s=>s.life>0).slice(-120);
     for(const f of floats)f.life-=dt*0.7;if(floats.length)floats=floats.filter(f=>f.life>0).slice(-20);
     if((uiDirty&&t-lastUI>250)||(!speed&&t-lastUI>400)){lastUI=t;topUI();uiDirty=false}
+    if(buildMode&&prevOpen&&t-lastPrev>1000){lastPrev=t;renderPrev()}
     if(!speed&&t-lastPanel>700){lastPanel=t;const me=G.cos[0],k=Math.round(me.cash)+'|'+G.b.length+'|'+me.loan;if(k!==pausedKey){pausedKey=k;if(!busy()){if(sel)renderSide();else if(selH)renderHouse();if(curWin&&curWin!=='settings'&&curWin!=='scn')openWin(curWin,true)}}}
     if(t-lastPanel>1000){lastPanel=t;panelRefresh()}
     if(t-lastMini>400){lastMini=t;drawMini()}}
@@ -1323,7 +1341,7 @@ cv.addEventListener('pointermove',e=>{if(!G)return;if(ptrs.has(e.pointerId))ptrs
     if(hs!=null&&!drag){const hh=city.house[hs];tip.classList.remove('hidden');tip.style.left=e.clientX+16+'px';tip.style.top=e.clientY+12+'px';tip.innerHTML=`🏘️ ${hh.tower?'高层住宅':'民房'} · 约 ${fnum(hcap(hh))} 位居民<br>拆迁费 ${fmt(demoCost(city,hs))} <span class="mu">点击可拆迁</span>`}
     else if((h||au)&&!drag){tip.classList.remove('hidden');tip.style.left=e.clientX+16+'px';tip.style.top=e.clientY+12+'px';
       tip.innerHTML=h?`<b style="color:${G.cos[h.o].col}">${G.cos[h.o].name}</b> · ${BT[h.type].n} ★${h.lv}<br>估值 ${fmt(bval(h))}`:`🔨 土地拍卖：起拍价 ${fmt(landPrice(city,au.x,au.y)*au.k)}<br><span class="mu">点击查看</span>`}else tip.classList.add('hidden')}});
-function buildInfo(city,x,y){const ld=lotDemo(city,x,y);return ld?`${BT[buildMode].ic} <b>${BT[buildMode].n}</b>（${city.n}）<br>${BT[buildMode].cost?'建造 '+fmt(BT[buildMode].cost)+' + ':''}地价 ${fmt(landPrice(city,x,y))}${ld.hs.length?`<br><span style="color:#fb923c">🏚️ 需拆迁 ${ld.hs.length} 栋居民楼，拆迁费 ${fmt(ld.cost)}</span>`:''}${BT[buildMode].g==='retail'?`<br>客流指数 ${traffic(city,x,y).toFixed(2)} · 周边居民 ${(gAt(city,'resd',x+1,y+1)*100).toFixed(0)}`:''}`:'<span class="neg">此处无法建造，请换个位置</span>'}
+function buildInfo(city,x,y){const ld=lotDemo(city,x,y);return ld?`${BT[buildMode].ic} <b>${BT[buildMode].n}</b>（${city.n}）<br>${BT[buildMode].cost?'建造 '+fmt(BT[buildMode].cost)+' + ':''}地价 ${fmt(landPrice(city,x,y))}${ld.hs.length?`<br><span style="color:#fb923c">🏚️ 需拆迁 ${ld.hs.length} 栋居民楼，拆迁费 ${fmt(ld.cost)}</span>`:''}${BT[buildMode].g==='retail'?`<br>客流指数 ${traffic(city,x,y).toFixed(2)} · 周边居民 ${(gAt(city,'resd',x+1,y+1)*100).toFixed(0)}`:''}${lotEstimate(city,x,y)}`:'<span class="neg">此处无法建造，请换个位置</span>'}
 function placeAt(x,y,keep){const city=CUR(),ld=lotDemo(city,x,y);if(!ld){toast('此处无法建造');return}
   const me=G.cos[0],cost=BT[buildMode].cost+landPrice(city,x,y)+ld.cost;if(me.cash<cost){toast('资金不足！可在财务中心贷款');return}
   if(ld.hs.length){me.cash-=ld.cost;me.m.op+=0;ld.hs.forEach(i=>demolish(city,i,me));addNews(`🏚️ ${me.name}在${city.n}拆迁 ${ld.hs.length} 栋居民楼，支付拆迁费 ${fmt(ld.cost)}`)}
@@ -1351,7 +1369,7 @@ function toast(t,kind){const d=document.createElement('div');d.className='toast'
 function addNews(t){const d=new Date(G.date);G.news.unshift(`[${d.getUTCFullYear()}/${d.getUTCMonth()+1}] ${t}`);G.news=G.news.slice(0,50);$('#news').textContent=G.news[0]}
 function setSpeed(s){speed=s;document.querySelectorAll('#spd button').forEach(b=>b.classList.toggle('on',+b.dataset.s===s))}
 document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.s));
-function setBuild(t){buildMode=t;hover=null;$('#bconf').classList.add('hidden');if(t&&MOBILE){document.body.classList.remove('showb');toast(`点击地图选择 ${BT[t].n} 的位置`)}document.querySelectorAll('.bbtn').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(!t)$('#tip').classList.add('hidden')}
+function setBuild(t){if(t&&typeof sel!=='undefined'&&(sel||selH))select(null);buildMode=t;hover=null;$('#bconf').classList.add('hidden');if(t&&MOBILE){document.body.classList.remove('showb');toast(`点击地图选择 ${BT[t].n} 的位置`)}document.querySelectorAll('.bbtn').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(!t)$('#tip').classList.add('hidden');renderPrev()}
 let bgrp='retail';
 function renderBuild(){$('#btabs').innerHTML=Object.entries(GROUPS).map(([k,v])=>`<button class="${k===bgrp?'on':''}" data-g="${k}">${v}</button>`).join('');
   document.querySelectorAll('#btabs button').forEach(b=>b.onclick=()=>{bgrp=b.dataset.g;renderBuild()});
@@ -1461,6 +1479,59 @@ window.buyAuction=i=>{const a=G.auctions[i];if(!a)return;const city=G.cities[a.c
   if(!lotOk(city,a.x,a.y)){G.auctions.splice(i,1);toast('地块已被占用');openWin('re',true);return}if(me.cash<price){toast('资金不足');return}
   me.cash-=price;const b=placeBuilding(me,'land',a.c,a.x,a.y,true);b.paid=price;G.auctions.splice(i,1);addNews(`🔨 ${me.name}在${city.n}土地拍卖中竞得一块地，成交 ${fmt(price)}`);toast('🔨 竞拍成功！可在地块上开发');openWin('re',true)};
 
+/* ===== 建造前的城市需求预览 ===== */
+let prevOpen=true;
+const tagS=(t,c)=>`<span class="tag" style="background:${c}22;color:${c};border-color:${c}55">${t}</span>`;
+const sdTag=r=>r>1.15?tagS('供不应求','#22c55e'):r>0.9?tagS('平衡','#94a3b8'):tagS('过剩','#f43f5e');
+const myMakes=()=>new Set(G.b.filter(b=>b.o===0&&b.prod&&P[b.prod]).map(b=>b.prod));
+const payback=(inv,yr)=>yr>0?(inv/yr<1?'< 1 年':(inv/yr).toFixed(1)+' 年'):'<span class="neg">难以回本</span>';
+// 住宅/写字楼：新建一栋 Lv1 后的预计入住率
+function reForecast(city,type){const re=city.re||{},u=type==='apt'?80:50,dem=type==='apt'?(re.ten||0)*1.05*MM.apt:(re.od||0)*MM.office,sup=(type==='apt'?re.sa:re.so)||0;
+  return{dem,sup,ratio:sup?dem/sup:9,occ:Math.min(0.97,0.97*clamp(dem/(sup+u),0.15,1.1)),u}}
+function rePreview(city,type){const f=reForecast(city,type),bs=G.b.filter(b=>b.c===city.id&&b.type===type),mine=bs.filter(b=>b.o===0).length,
+  avgOcc=bs.length?bs.reduce((s,b)=>s+(b.occ||0),0)/bs.length:0,avgRent=bs.length?bs.reduce((s,b)=>s+b.rent,0)/bs.length:0,apt=type==='apt';
+  const st=f.ratio>1.15?tagS(apt?'缺房':'写字楼紧缺','#22c55e'):f.ratio>0.9?tagS('基本平衡','#94a3b8'):tagS(apt?'空置偏多':'空置偏多','#f43f5e');
+  let h=`<div class="pv-kpis"><div><b>${fnum(f.dem)}</b><span>${apt?'租房需求（户）':'办公需求（单位）'}</span></div><div><b>${fnum(f.sup)}</b><span>现有供应（${bs.length} 栋，我的 ${mine} 栋）</span></div><div><b>${(f.occ*100).toFixed(0)}%</b><span>新建一栋预计入住率</span></div></div>
+  <div class="row"><span>供需状态</span><span>${st} 需求/供应 ${f.sup?f.ratio.toFixed(2):'∞'}</span></div>`;
+  if(bs.length)h+=`<div class="row"><span>本城同类平均入住率 / 租金</span><span>${(avgOcc*100).toFixed(0)}% / ¥${avgRent.toFixed(0)} 每${apt?'套':'单位'}日</span></div>`;
+  if(apt)h+=`<div class="row"><span>城市人口 / 住房容量</span><span>${fnum(city.pop)} / ${fnum(city.cap||0)}</span></div><div class="row"><span>就业吸引力</span><span>${(city.attr||1).toFixed(2)} ${(city.attr||1)>1.05?'（就业多，人口会流入）':(city.attr||1)<0.95?'（就业少，人口增长慢）':''}</span></div>`;
+  else h+=`<div class="row"><span>城内企业建筑数</span><span>${city.biz||0} 座（越多办公需求越大）</span></div>`;
+  const mm=apt?MM.apt:MM.office;if(Math.abs(mm-1)>0.02)h+=`<div class="row"><span>宏观影响</span><span class="${mm>1?'pos':'neg'}">${apt?'住宅':'写字楼'}需求 ×${mm.toFixed(2)}</span></div>`;
+  h+=`<div class="mu pv-tip">${f.ratio>1.15?'✅ 需求大于供应，新楼很快能租满。':f.ratio>0.9?'⚖️ 供需大致平衡，选市中心的位置租金更高。':'⚠️ 供应过剩，新楼入住率会偏低，可以先等人口增长或去别的城市。'}把鼠标移到地图上可看具体位置的租金和回本时间。</div>`;return h}
+function retailPreview(city){const me=G.cos[0],mk=myMakes(),rows=[];
+  for(const p of FINAL){const s=city.sales[p]||{D:P[p].dem||0,n:0,tot:0};let pw=0,pn=0;for(const b of G.b)if(isRetail(b)&&b.c===city.id)for(const sl of b.slots)if(sl.p===p){pw+=(sl.sold||0)*sl.price;pn+=sl.sold||0}
+    const avg=pn?pw/pn:refNow(p),gap=Math.max(0,(s.D||0)-(s.tot||0)),mg=(avg-G.imp[p])/avg,score=(gap+(s.D||0)/((s.n||0)+1)*0.3)*Math.max(0,avg-G.imp[p]);rows.push({p,s,avg,gap,mg,score})}
+  rows.sort((a,b)=>b.score-a.score);const stores=G.b.filter(b=>isRetail(b)&&b.c===city.id),mine=stores.filter(b=>b.o===0).length;
+  let h=`<div class="pv-kpis"><div><b>${fnum(city.pop)}</b><span>城市人口</span></div><div><b>${stores.length}</b><span>门店总数（我的 ${mine} 家）</span></div><div><b>${SEG.map((g,k)=>g.ic+Math.round(segMix(city)[k]*100)).join(' ')}</b><span>消费者：价格/品质/品牌 %</span></div></div>
+  <div class="mu pv-tip" style="margin:4px 0">按「机会」排序：需求缺口大、竞争店少、毛利高的商品排前面。</div>
+  <table class="pv-t"><tr><th>商品</th><th>日需求</th><th>缺口</th><th>在售店</th><th>均价</th><th>毛利</th></tr>${rows.slice(0,8).map(r=>`<tr><td>${P[r.p].ic} ${P[r.p].n}${mk.has(r.p)?' <span class="tag">自产</span>':P[r.p].tech&&me.tech[r.p]<P[r.p].tech?' <span class="tag" title="需研发后自产或进口">进口</span>':''}</td><td>${fnum(r.s.D||0)}</td><td class="${r.gap>0?'pos':''}">${fnum(r.gap)}</td><td>${r.s.n||0}</td><td>${fmt(r.avg)}</td><td class="${r.mg>0.25?'pos':r.mg<0.1?'neg':''}">${(r.mg*100).toFixed(0)}%</td></tr>`).join('')}</table>
+  <div class="mu pv-tip">门店选在人多、竞争少的地方：鼠标移到地图上可看客流指数和附近的竞争门店。</div>`;return h}
+function factoryPreview(){const me=G.cos[0],rows=[];
+  for(const p of [...MID,...FINAL]){const pp=P[p],cost=Object.keys(pp.inp||{}).reduce((s,k)=>s+pp.inp[k]*G.imp[k],0),val=FINAL.includes(p)?Math.max(G.imp[p],refNow(p)*0.85):G.imp[p],unit=val-cost,day=unit*pp.rate-BT.factory.op,sd=G.sd[p]||{s:0,d:0},lock=pp.tech&&me.tech[p]<pp.tech;
+    rows.push({p,cost,val,unit,day,r:sd.s?sd.d/sd.s:(sd.d>0?9:1),lock})}
+  rows.sort((a,b)=>(a.lock-b.lock)||(b.day-a.day));
+  return`<div class="mu pv-tip" style="margin-bottom:4px">按每天毛利排序（Lv1 工厂满负荷、原料按当前批发价采购）。成品按 85% 零售参考价估算，可以进自家门店卖。</div>
+  <table class="pv-t"><tr><th>产品</th><th>原料成本</th><th>产出价值</th><th>日毛利</th><th>市场</th></tr>${rows.slice(0,10).map(r=>`<tr${r.lock?' style="opacity:.55"':''}><td>${P[r.p].ic} ${P[r.p].n}${r.lock?` 🔒Lv${P[r.p].tech}`:''}</td><td>${fmt(r.cost)}</td><td>${fmt(r.val)}</td><td class="${r.day>0?'pos':'neg'}">${fmt(r.day)}</td><td>${sdTag(r.r)}</td></tr>`).join('')}</table>
+  <div class="mu pv-tip">🔒 表示还没研发到所需技术等级。「供不应求」的中间品可以卖给别的公司（B2B），价格也在涨。</div>`}
+function rawPreview(t){const ps=[...RAW].filter(p=>P[p].src===t);return`<table class="pv-t"><tr><th>产出</th><th>批发价</th><th>较基准</th><th>日收入</th><th>市场</th></tr>${ps.map(p=>{const sd=G.sd[p]||{s:0,d:0},r=sd.s?sd.d/sd.s:(sd.d>0?9:1);return`<tr><td>${P[p].ic} ${P[p].n}</td><td>${fmt(G.imp[p])}</td><td>${chg(p)}</td><td class="${P[p].rate*G.imp[p]>BT[t].op?'pos':'neg'}">${fmt(P[p].rate*G.imp[p]-BT[t].op)}</td><td>${sdTag(r)}</td></tr>`}).join('')}</table>
+  <div class="mu pv-tip">日收入 = 日产量 × 批发价 − 运营费（Lv1）。原料价受宏观事件影响大，留意「宏观」窗口。</div>`}
+function whPreview(){const me=G.cos[0];return`<table class="pv-t"><tr><th>城市</th><th>我的库存</th><th>单品上限</th><th>仓库</th></tr>${G.cities.map((c,ci)=>{const q=PK.reduce((s,p)=>s+me.ci[ci][p].q,0),n=G.b.filter(b=>b.o===0&&b.type==='wh'&&b.c===ci).length;return`<tr${ci===G.cur?' style="background:rgba(56,189,248,.08)"':''}><td>${c.n}</td><td>${fnum(q)}</td><td>${fnum(capCity(me,ci))}</td><td>${n}</td></tr>`}).join('')}</table><div class="mu pv-tip">每座仓库让本城单品库存上限 +3000 件，并降低本城的物流费用。</div>`}
+function landPreview(city){const hst=city.idxHist||[],y=hst.length>12?city.idx/hst[hst.length-13]-1:0;return`<div class="pv-kpis"><div><b>${city.idx.toFixed(2)}</b><span>地价指数</span></div><div><b class="${y>=0?'pos':'neg'}">${(y*100).toFixed(1)}%</b><span>近一年涨幅</span></div><div><b>${(city.trend*1000).toFixed(1)}‰</b><span>当前月度趋势</span></div></div><div class="mu pv-tip">住宅越密集的地方地价越高。指数会周期波动，留意楼市调控等宏观事件。</div>`}
+function netPreview(){const me=G.cos[0];return`<table class="pv-t"><tr><th>产品</th><th>用户上限</th><th>我的用户</th><th>领先者</th></tr>${NK.map(k=>{const lead=G.cos.filter(c=>!c.dead).sort((a,b)=>b.users[k]-a.users[k])[0];return`<tr><td>${NET[k].ic} ${NET[k].n}</td><td>${fnum(G.netU[k]||0)}</td><td>${fnum(me.users[k])}</td><td>${lead&&lead.users[k]>0?lead.name:'-'}</td></tr>`}).join('')}</table><div class="mu pv-tip">服务器：${fnum(usersOf(me))} / ${fnum(capOf(me))} 用户。数据中心每座 +5 万承载。</div>`}
+function renderPrev(){const el=$('#bprev');if(!el)return;if(!G||!buildMode){el.classList.add('hidden');document.body.classList.remove('bprev');return}el.classList.remove('hidden');document.body.classList.toggle('bprev',prevOpen);
+  const city=CUR(),t=buildMode,g=BT[t].g;
+  if(!prevOpen){el.className='panel mini';el.innerHTML=`<button class="pv-open" onclick="prevOpen=true;renderPrev()">📋 ${city.n}需求预览</button>`;return}
+  el.className='panel';let body;
+  if(t==='apt'||t==='office')body=rePreview(city,t);else if(g==='retail')body=retailPreview(city);else if(t==='factory')body=factoryPreview();
+  else if(t==='farm'||t==='forest'||t==='mine')body=rawPreview(t);else if(t==='wh')body=whPreview();else if(t==='land')body=landPreview(city);else if(t==='net'||t==='dc')body=netPreview();else body='<div class="mu">研发中心提升已有产品的品质，并解锁需要技术的新产品。</div>';
+  const st=el.scrollTop;el.innerHTML=`<div class="pv-h"><b>📋 ${city.n} · ${BT[t].ic} ${BT[t].n} 需求预览</b><button class="gx" onclick="prevOpen=false;renderPrev()" title="收起">—</button></div>${body}`;el.scrollTop=st}
+// 鼠标所在地块的具体估算（追加到建造提示里）
+function lotEstimate(city,x,y){const t=buildMode;if(!t)return'';
+  if(t==='apt'||t==='office'){const f=reForecast(city,t),rent=refRent({type:t,c:city.id,x,y}),inc=f.u*f.occ*rent*365-BT[t].op*365,inv=BT[t].cost+landPrice(city,x,y);
+    return`<br>参考租金 ¥${rent.toFixed(0)}/${t==='apt'?'套':'单位'}·日 · 预计入住 ${(f.occ*100).toFixed(0)}%<br>预计年净收入 ${fmt(inc)} · 回本 ${payback(inv,inc)}`}
+  if(BT[t].g==='retail'){const near={};for(const b of G.b)if(isRetail(b)&&b.c===city.id&&Math.hypot(b.x-x,b.y-y)<=7){const c=G.cos[b.o];near[c.id]=(near[c.id]||0)+1}
+    const ks=Object.keys(near);return`<br>附近 7 格内门店：${ks.length?ks.map(id=>`<span style="color:${G.cos[id].col}">${+id===0?'我':G.cos[id].name}×${near[id]}</span>`).join(' '):'无，独占这片客流'}`}
+  return''}
 /* ================= 窗口 ================= */
 let netTab='ov',finPer='m',ibTab='all',setTab='save',curWin=null,reTab='overview',hrTab='team',hrRole=null,finTab='is',subSel=null;
 let rpResume=0;

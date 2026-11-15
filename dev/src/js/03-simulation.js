@@ -43,7 +43,7 @@ function simDay(){
     ensureGrid(city);const cap=city.dcap+sa*25,jobs=biz*150+soc*20+city.pop*0.3,attr=clamp(jobs/(city.pop*0.45),0.6,1.4);
     city.cap=cap;city.attr=attr;city.biz=biz;city.pop+=(cap*0.97-city.pop)*(city.pop<cap*0.97?0.006*attr:0.002)+city.pop*city.g*0.3;
     const ten=Math.max(0,city.pop-city.dcap*0.9)/25,od=30+biz*6+city.pop/2000;
-    reS[city.id]={fa:sa?clamp(ten/sa*1.05*MM.apt,0.15,1.1):1.1,fo:so?clamp(od/so*MM.office,0.15,1.1):1.1,sa,so};city.re=reS[city.id]}
+    reS[city.id]={fa:sa?clamp(ten/sa*1.05*MM.apt,0.15,1.1):1.1,fo:so?clamp(od/so*MM.office,0.15,1.1):1.1,sa,so,ten,od};city.re=reS[city.id]}
   for(const b of bs){
     const c=G.cos[b.o];const op=opCost(b)*wageOp(c)*(1-0.15*exS(c,'coo'))*scaleF(c);c.cash-=op;c.m.op+=op;segAcc(b,'op',op);b.out=0;
     if(isRetail(b)||b.type==='dc'||b.type==='land')continue;

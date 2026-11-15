@@ -99,6 +99,22 @@ button{touch-action:manipulation}
 #build,#side{top:calc(var(--toph,50px) + 16px)}
 #side{max-height:calc(100% - var(--toph,50px) - 16px - 52px)}
 #mini,#heat{transition:right .2s ease}
+#bprev{position:fixed;left:192px;top:calc(var(--toph,50px) + 16px);width:370px;max-height:calc(100% - var(--toph,50px) - 16px - 60px);overflow:auto;padding:10px 12px;z-index:5;font-size:12px}
+#bprev.mini{width:auto;padding:4px}#bprev .pv-open{padding:6px 10px;font-size:12px}
+#bprev .pv-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+#bprev .gx{width:24px;height:24px;padding:0;border-radius:6px;flex:none}
+#bprev .pv-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+#bprev .pv-kpis>div{background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.15);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column;gap:2px}
+#bprev .pv-kpis b{font-size:15px}#bprev .pv-kpis span{font-size:10.5px;color:var(--mu,#94a3b8);line-height:1.3}
+#bprev .row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed rgba(148,163,184,.12)}
+#bprev .pv-t{width:100%;font-size:11.5px}#bprev .pv-t th,#bprev .pv-t td{padding:3px 4px;white-space:nowrap}
+#bprev .pv-tip{font-size:11px;margin-top:6px;line-height:1.5}
+@media (max-width:1000px){#bprev{left:166px;width:320px}}
+body.m #bprev{left:calc(env(safe-area-inset-left) + 6px);right:calc(env(safe-area-inset-right) + 6px);width:auto;top:calc(env(safe-area-inset-top) + var(--toph,90px) + 8px);max-height:34vh;z-index:8}
+body.m #bprev.mini{right:auto}
+body.bprev:not(.m) #toasts{left:calc(50% + 200px)}
+body.m.bprev #toasts{top:calc(env(safe-area-inset-top) + var(--toph,90px) + 34vh + 18px)}
+body.m #bprev .pv-kpis b{font-size:13px}body.m #bprev .pv-kpis span{font-size:10px}body.m #bprev{font-size:11.5px}
 body.sideopen:not(.m) #mini,body.sideopen:not(.m) #heat{right:336px}
 @media (max-width:1000px){body.sideopen:not(.m) #mini,body.sideopen:not(.m) #heat{right:286px}}
 .mob{display:none!important}
@@ -242,6 +258,7 @@ body.m #mb th{position:static}
 <button id="fab" onclick="toggleBuild()">🏗️</button>
 <div id="bconf" class="panel hidden"><div id="bconf-t" style="flex:1"></div><button class="pri" id="bconf-ok">确认建造</button><button id="bconf-no">取消</button></div>
 <div id="side" class="panel hidden"></div>
+<div id="bprev" class="panel hidden"></div>
 <div id="ticker" class="panel"><span class="lab">📰 快讯</span><span id="news">欢迎来到资本帝国实验室。</span></div>
 <div id="heat" class="panel"><span class="mu" style="padding:0 4px">热力图</span><button data-h="0" class="on">关</button><button data-h="1">人口</button><button data-h="2">地价</button></div>
 <canvas id="mini" class="panel" width="160" height="90"></canvas>

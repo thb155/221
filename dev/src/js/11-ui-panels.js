@@ -3,7 +3,7 @@ function toast(t,kind){const d=document.createElement('div');d.className='toast'
 function addNews(t){const d=new Date(G.date);G.news.unshift(`[${d.getUTCFullYear()}/${d.getUTCMonth()+1}] ${t}`);G.news=G.news.slice(0,50);$('#news').textContent=G.news[0]}
 function setSpeed(s){speed=s;document.querySelectorAll('#spd button').forEach(b=>b.classList.toggle('on',+b.dataset.s===s))}
 document.querySelectorAll('#spd button').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.s));
-function setBuild(t){buildMode=t;hover=null;$('#bconf').classList.add('hidden');if(t&&MOBILE){document.body.classList.remove('showb');toast(`点击地图选择 ${BT[t].n} 的位置`)}document.querySelectorAll('.bbtn').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(!t)$('#tip').classList.add('hidden')}
+function setBuild(t){if(t&&typeof sel!=='undefined'&&(sel||selH))select(null);buildMode=t;hover=null;$('#bconf').classList.add('hidden');if(t&&MOBILE){document.body.classList.remove('showb');toast(`点击地图选择 ${BT[t].n} 的位置`)}document.querySelectorAll('.bbtn').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(!t)$('#tip').classList.add('hidden');renderPrev()}
 let bgrp='retail';
 function renderBuild(){$('#btabs').innerHTML=Object.entries(GROUPS).map(([k,v])=>`<button class="${k===bgrp?'on':''}" data-g="${k}">${v}</button>`).join('');
   document.querySelectorAll('#btabs button').forEach(b=>b.onclick=()=>{bgrp=b.dataset.g;renderBuild()});
