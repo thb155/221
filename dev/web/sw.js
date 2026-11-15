@@ -1,6 +1,6 @@
 // 资本帝国实验室 · 离线缓存（Service Worker）
 // 策略：页面优先走网络（保证拿到最新版），断网时用缓存；图标等静态文件缓存优先。
-const VERSION = 'mwhbz3bh';
+const VERSION = 'mwhcakg5';
 const CACHE = 'cel-' + VERSION;
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())); });

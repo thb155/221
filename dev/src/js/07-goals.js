@@ -15,6 +15,8 @@ const GOALS=[
  {t:'在股市收购一家竞争对手',f:()=>G.cos[0].acquired>0},
  {t:'净资产达到 ¥1亿，成为商业帝国！',f:()=>netWorth(G.cos[0])>=1e8},
 ];
-function checkGoal(){let ch=false;while(G.goal<GOALS.length&&GOALS[G.goal].f()){notify('goal','目标达成：'+GOALS[G.goal].t,'',true);G.goal++;ch=true}if(ch)renderGoal()}
-function renderGoal(){const sc=SCN[G.scn];if(sc&&sc.win&&!G.scnDone){const y=new Date(G.date).getUTCFullYear();$('#goal').innerHTML=`<div class="t">${sc.ic} ${sc.n}</div>${sc.goal}<div class="mu" style="font-size:11px;margin-top:3px">剩余约 ${Math.max(0,sc.deadline-y+1)} 年</div>`;return}const g=GOALS[G.goal];$('#goal').innerHTML=`<div class="t">🎯 目标 ${Math.min(G.goal+1,GOALS.length)}/${GOALS.length}</div>${g?g.t:'全部完成！你就是商业传奇。'}<div class="bar" style="margin-top:6px"><i style="width:${G.goal/GOALS.length*100}%"></i></div>`}
+const tutOn=()=>{try{return localStorage.getItem('cel-tut')!=='0'}catch(e){return true}};
+window.setTut=v=>{try{localStorage.setItem('cel-tut',v?'1':'0')}catch(e){}if(G)renderGoal();if(!v)toast('📘 教程已关闭，可在「⚙️ 设置 → 🎮 游戏规则」重新打开');if(curWin==='settings')openWin('settings')};
+function checkGoal(){let ch=false;while(G.goal<GOALS.length&&GOALS[G.goal].f()){notify('goal','目标达成：'+GOALS[G.goal].t,'',tutOn());G.goal++;ch=true}if(ch)renderGoal()}
+function renderGoal(){const el=$('#goal');if(!tutOn()){el.classList.add('hidden');return}el.classList.remove('hidden');const gx='<button class="gx" onclick="setTut(0)" title="关闭教程">✕</button>';const sc=SCN[G.scn];if(sc&&sc.win&&!G.scnDone){const y=new Date(G.date).getUTCFullYear();$('#goal').innerHTML=gx+`<div class="t">${sc.ic} ${sc.n}</div>${sc.goal}<div class="mu" style="font-size:11px;margin-top:3px">剩余约 ${Math.max(0,sc.deadline-y+1)} 年</div>`;return}const g=GOALS[G.goal];$('#goal').innerHTML=gx+`<div class="t">🎯 目标 ${Math.min(G.goal+1,GOALS.length)}/${GOALS.length}</div>${g?g.t:'全部完成！你就是商业传奇。'}<div class="bar" style="margin-top:6px"><i style="width:${G.goal/GOALS.length*100}%"></i></div>`}
 

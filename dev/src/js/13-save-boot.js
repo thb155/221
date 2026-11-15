@@ -54,8 +54,8 @@ window.pickAll=m=>{if(m===1)opt.picks=AI_DEF.map(a=>a.k);else if(m===0)opt.picks
 window.toggleRename=()=>{$('#renbox').classList.toggle('hidden');renderRivals()};window.setRen=(k,f2,v)=>{(opt.rename[k]=opt.rename[k]||{})[f2]=v.trim()};
 renderRivals();
 function boot(){$('#start').classList.add('hidden');G.buff=G.buff||{};G.pend=G.pend||[];G.inbox=G.inbox||[];setTimeout(updBadge,60);MM=macroMods();setTimeout(layout,50);$('#cname').dataset.l='';centerCam();renderCities();spawnCars();setSpeed(1);topUI();renderGoal();$('#news').textContent=G.news[0]||'';
-  const mine=G.b.filter(b=>b.o===0);if(mine.length){const b=mine[0];const [ix,iy]=iso(b.x+1,b.y+1);cam.x=VW/2-ix*cam.z;cam.y=VH/2-iy*cam.z;setTimeout(()=>{select(b);toast('👉 点击你的建筑进行设置（选择产品、上架商品等）')},500)}
-  else setTimeout(()=>toast('👉 左侧选择建筑开始创业，比如「🏬 零售」里的便利店'),600)}
+  const mine=G.b.filter(b=>b.o===0);if(mine.length){const b=mine[0];const [ix,iy]=iso(b.x+1,b.y+1);cam.x=VW/2-ix*cam.z;cam.y=VH/2-iy*cam.z;setTimeout(()=>{select(b);if(tutOn())toast('👉 点击你的建筑进行设置（选择产品、上架商品等）')},500)}
+  else if(tutOn())setTimeout(()=>toast('👉 左侧选择建筑开始创业，比如「🏬 零售」里的便利店'),600)}
 const rndCo=()=>pick(['星河','远航','鸿图','卓越','启明','腾跃','恒信','瑞丰'])+pick(['集团','控股','实业','商贸']);
 const rndName=()=>pick(['李','张','刘','陈','杨','赵','周','吴'])+pick(['明','华','峰','磊','静','婷','宇','航']);
 $('#btn-new').onclick=()=>{newGame({...opt,name:$('#in-name').value.trim()||rndCo(),founder:$('#in-founder').value.trim()||rndName()});boot()};

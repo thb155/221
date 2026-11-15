@@ -77,6 +77,7 @@
     T('对手全选时也能生成全新公司进场', () => { fresh({picks:AI_DEF.map(a=>a.k)}); run(30); const c=spawnEntrant(); run(60); return (c && !AI_DEF.some(a=>a.n===c.name) && /^#[0-9a-f]{6}$/.test(c.col)) || (c&&c.name+' '+c.col); });
     T('暂停时花钱，顶栏现金立即刷新', () => { fresh(); boot(); setSpeed(0); const me=G.cos[0]; me.cash-=123456; lastUI=0; loop(performance.now()+5000); return $('#s-cash').textContent===fmt(me.cash) || $('#s-cash').textContent+' vs '+fmt(me.cash); });
     T('财报弹出时自动暂停，关闭后恢复', () => { fresh(); boot(); closeModal(); setSpeed(2); G.autoReport=true; let k=0; while(G.reports==null||!G.reports.length){simDay();if(++k>200)break} const paused=speed===0&&curWin==='report'; closeModal(); return (paused && speed===2) || `paused=${paused} speed=${speed} win=${curWin}`; });
+    T('新手教程可以关闭和重新打开', () => { fresh(); boot(); setTut(0); const hid=$('#goal').classList.contains('hidden'); setSpeed(0); setTab='game'; openWin('settings'); const box=[...document.querySelectorAll('#mb input[type=checkbox]')].find(x=>/教程/.test(x.parentElement.textContent)); setTut(1); closeModal(); const back=!$('#goal').classList.contains('hidden')&&!!$('#goal .gx'); return (hid&&box&&!box.checked&&back) || `hid=${hid} box=${!!box} back=${back}`; });
     T('所有窗口都能打开', () => {
       fresh(); run(400);
       const ws = ['market', 're', 'net', 'finance', 'research', 'stock', 'rank', 'macro', 'hr', 'war', 'inbox', 'report', 'dash', 'settings', 'help'];
