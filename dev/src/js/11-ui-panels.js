@@ -11,7 +11,7 @@ function renderBuild(){$('#btabs').innerHTML=Object.entries(GROUPS).map(([k,v])=
   document.querySelectorAll('#blist .bbtn').forEach(b=>b.onclick=()=>setBuild(buildMode===b.dataset.t?null:b.dataset.t))}
 renderBuild();
 function switchCity(i){G.cur=i;trucks=[];select(null);setBuild(null);centerCam();spawnCars();smoke=[];floats=[];miniDirty=true;renderCities()}
-function renderCities(){$('#cities').innerHTML=G.cities.map((c,i)=>`<button class="${i===G.cur?'on':''}" onclick="switchCity(${i})" title="人口 ${fnum(c.pop)} · 地价指数 ${c.idx.toFixed(2)}">${c.n}</button>`).join('')}
+function renderCities(){$('#cities').innerHTML=G.cities.map((c,i)=>`<button class="${i===G.cur?'on':''}" onclick="switchCity(${i})" title="人口 ${fnum(c.pop)} · 地价指数 ${c.idx.toFixed(2)}">${c.n}</button>`).join('');if(window.menuUpd)setTimeout(menuUpd,50)}
 window.switchCity=switchCity;
 function topUI(){const me=G.cos[0],d=new Date(G.date);if(!$('#cname').dataset.l){$('#cname').innerHTML=logo(me,14)+' '+me.name;$('#cname').dataset.l=1}$('#s-rate').textContent=`利率 ${(G.rate*100).toFixed(2)}%`;$('#s-mev').textContent=G.mev.length?G.mev.map(e=>MDEF(e.k).ic).join(''):'🌤️';$('#s-cash').textContent=fmt(me.cash);$('#s-cash').className=me.cash<0?'neg':'';$('#s-nw').textContent=fmt(netWorth(me));
   const pf=me.m.rev+me.m.net+me.m.rent+me.m.dep+me.m.whole-me.m.purch-me.m.op-me.m.sal-(me.m.logi||0)-me.m.ad-me.m.int;$('#s-pf').textContent=fmt(pf);$('#s-pf').className=pf>=0?'pos':'neg';

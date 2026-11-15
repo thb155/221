@@ -62,7 +62,7 @@ table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 th,td{padding:5px 7px;border-bottom:1px solid rgba(148,163,184,.1);text-align:right;white-space:nowrap}
 th{color:var(--mu);font-weight:600;font-size:12px}
 th:first-child,td:first-child{text-align:left}
-#toasts{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+#toasts{position:fixed;top:calc(var(--toph,56px) + 16px);left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
 .toast{padding:7px 13px;border-radius:9px;background:#0f172a;border:1px solid var(--bd)}
 #start{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-start;justify-content:center;background:rgba(2,6,23,.8);overflow:auto}
 #start .win{width:min(760px,95vw);padding:22px;margin:20px}
@@ -86,6 +86,14 @@ canvas#c{touch-action:none}
 button{touch-action:manipulation}
 #menu{display:flex;gap:6px;align-items:center;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
 #menu::-webkit-scrollbar{display:none}
+#mrow{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;max-width:100%}
+#mrow #menu{flex:0 1 auto}
+#sysb{display:flex;gap:6px;flex:none;padding-left:6px;border-left:1px solid rgba(148,163,184,.18)}
+#top .mnav{flex:none;width:22px;height:40px;padding:0!important;border-radius:7px;font-size:18px;line-height:1;display:none;background:rgba(30,41,59,.8)}
+#mrow.ovl #mnL,#mrow.ovr #mnR{display:block}
+#mrow.ovr #menu{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
+#mrow.ovl #menu{-webkit-mask-image:linear-gradient(90deg,transparent,#000 26px);mask-image:linear-gradient(90deg,transparent,#000 26px)}
+#mrow.ovl.ovr #menu{-webkit-mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent)}
 #top button,#menu .grp{flex:none;white-space:nowrap}
 #heat{position:fixed;right:8px;bottom:148px;z-index:5;padding:4px;display:flex;gap:3px;align-items:center;font-size:12px}
 #build,#side{top:calc(var(--toph,50px) + 16px)}
@@ -105,7 +113,8 @@ body.m .stat span{font-size:10px}
 body.m .stat b{font-size:13px}
 body.m #spd{margin-left:0;flex:none}
 body.m #spd button{width:34px;height:32px}
-body.m #menu{flex-basis:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px}
+body.m #mrow{flex-basis:100%;gap:4px}body.m #sysb{gap:4px;padding-left:4px}body.m #top .mnav{width:20px;height:36px}
+body.m #menu{flex:1;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px}
 body.m #menu::-webkit-scrollbar{display:none}
 body.m #menu .sep{display:none}
 body.m #menu button,body.m #menu .grp{flex:none}
@@ -209,7 +218,7 @@ body.m #mb th{position:static}
   <div class="stat"><span>📅 日期</span><b id="s-date">-</b></div>
   <div class="stat" id="s-macro" data-w="macro" style="cursor:pointer"><span id="s-rate">利率 4.50%</span><b id="s-mev">🌍</b></div>
   <div class="grp spd" id="spd"><button data-s="0" title="暂停 (空格)">⏸</button><button data-s="1">▶</button><button data-s="2">⏩</button><button data-s="3">⏭</button></div>
-  <div id="menu">
+  <div id="mrow"><button id="mnL" class="mnav" title="向左">‹</button><div id="menu">
   <div class="grp" id="cities"></div>
   <div class="sep"></div>
   <button data-w="dash" class="tb">📊<i>看板</i></button>
@@ -220,9 +229,8 @@ body.m #mb th{position:static}
   <button data-w="war" class="tb">⚔️<i>商战</i></button>
   <button data-w="inbox" id="btn-inbox" class="tb" style="position:relative">🔔<i>通知</i><span id="ibadge" class="badge hidden">0</span></button>
   <button data-w="dash" class="tb more" title="全部功能：地产、互联网、研发、人才、排行、宏观……">☰<i>全部</i></button>
-  <button data-w="settings" class="tb" title="设置：存档读档、画质、音效">⚙️<i>设置</i></button>
-  <button id="btn-save" class="tb" title="存档 / 读档">💾<i>存档</i></button>
-  </div>
+  </div><button id="mnR" class="mnav" title="向右">›</button>
+  <div id="sysb"><button data-w="settings" class="tb" title="设置：存档读档、画质、音效">⚙️<i>设置</i></button><button id="btn-save" class="tb" title="存档 / 读档">💾<i>存档</i></button></div></div>
 </div>
 
 <div id="build" class="panel"><div class="mob row" style="padding:0 2px 6px"><b>🏗️ 建造</b><button onclick="toggleBuild(false)">收起 ▾</button></div><div id="btabs"></div><div id="blist" style="display:flex;flex-direction:column;gap:5px"></div><div class="mu" style="font-size:11px;margin-top:3px;line-height:1.5">Shift 连续建造 · Esc 取消</div></div>

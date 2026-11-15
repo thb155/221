@@ -3,6 +3,10 @@ let finPer='m',ibTab='all',setTab='save',curWin=null,reTab='overview',hrTab='tea
 let rpResume=0;
 function closeModal(){$('#modal').classList.add('hidden');curWin=null;if(rpResume){if(!speed&&G&&!G.over)setSpeed(rpResume);rpResume=0}}
 $('#mx').onclick=closeModal;$('#modal').addEventListener('pointerdown',e=>{if(e.target.id==='modal')closeModal()});
+(()=>{const m=$('#menu'),r=$('#mrow');if(!m||!r)return;const upd=()=>{const L=m.scrollLeft>2,R=m.scrollLeft+m.clientWidth<m.scrollWidth-2;r.classList.toggle('ovl',L);r.classList.toggle('ovr',R)};
+  m.addEventListener('scroll',upd,{passive:true});addEventListener('resize',()=>setTimeout(upd,60));setTimeout(upd,300);window.menuUpd=upd;
+  m.addEventListener('wheel',e=>{if(m.scrollWidth<=m.clientWidth)return;const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;m.scrollLeft+=d;e.preventDefault();upd()},{passive:false});
+  $('#mnL').onclick=()=>m.scrollBy({left:-m.clientWidth*0.7,behavior:'smooth'});$('#mnR').onclick=()=>m.scrollBy({left:m.clientWidth*0.7,behavior:'smooth'})})();
 document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{if(MOBILE)document.body.classList.remove('showb');openWin(b.dataset.w)});
 const logoCh=c=>(c.logo||c.name.replace(/^[\s]+/,'')[0]||'?');
 const logo=(c,sz)=>c?`<span class="lg" style="background:${c.col};width:${sz||20}px;height:${sz||20}px;font-size:${(sz||20)*0.58}px;border-radius:${c.id%2?'50%':'6px'}">${logoCh(c)}</span>`:'';
