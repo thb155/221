@@ -915,12 +915,12 @@ function netRevDay(alive){
   // 内部广告主：每家公司商品广告预算的线上部分
   let intTot=0;
   for(const a of alive){let A=0;for(const p of FINAL)A+=a.ad[p]||0;a._adEff=1;if(A<=0)continue;
-    const on=A*sOn;if(a.id===0){const m=adBook(a);m.trad+=A-on}
+    const on=A*Math.min(0.95,sOn*adChMul(a));if(a.id===0){const m=adBook(a);m.trad+=A-on}
     if(!plats.length){if(a.id===0)adBook(a).trad+=on;continue}
-    const el=plats.filter(q=>adAccepts(q.c,q.k,a.id)),tot=el.reduce((s,q)=>s+q.inv,0),selfB=el.reduce((s,q)=>s+(q.c.id===a.id&&q.p.self?q.inv:0),0),f=Math.min(1.5,(tot+selfB)/invTot);
-    a._adEff=(1-sOn)+sOn*(0.6+0.6*f);// 自家平台优先展示：自家广告位权重翻倍
+    const el=plats.filter(q=>adAccepts(q.c,q.k,a.id)&&adPref(a,q.c.id)>0),wq=q=>q.inv*adPref(a,q.c.id),tot=el.reduce((s,q)=>s+wq(q),0),reach=el.reduce((s,q)=>s+q.inv,0),selfB=el.reduce((s,q)=>s+(q.c.id===a.id&&q.p.self?q.inv:0),0),f=Math.min(1.5,(reach+selfB)/invTot);
+    const so=Math.min(0.95,sOn*adChMul(a));a._adEff=(1-so)+so*(0.6+0.6*f);// 自家平台优先展示：自家广告位权重翻倍
     if(tot<=0){if(a.id===0)adBook(a).rej+=on;continue}
-    for(const q of el){const v=on*q.inv/tot;
+    for(const q of el){const v=on*wq(q)/tot;
       if(q.c.id===a.id){a.cash+=v;a.m.ad-=v;if(a.id===0)adBook(a).self+=v;continue}// 自家平台：集团内部结算，不花钱
       q.int+=v;(q.from||(q.from={}))[a.id]=(q.from[a.id]||0)+v;intTot+=v;if(a.id===0){const o=adBook(a).out;o[q.c.id]=(o[q.c.id]||0)+v}}}
   const ext=invTot*0.82*mac,W=extW(),Ws=W.reduce((s,x)=>s+x,0);let adTot=0;
@@ -956,6 +956,47 @@ Object.assign(DEC,{
     return{body:`一家“神奇保健品”厂商出三倍价格，想在你的「${NET[k].n}」投放半年广告，一次性支付 ${fmt(amt)}。半年后有约 35% 概率被曝光：罚款两倍、用户流失 15%。`,opts:[['接单 '+fmt(amt),()=>{me.cash+=amt;me.m.net+=amt;me.m.netAd=(me.m.netAd||0)+amt;Object.assign(G.buff,{grayRisk:G.day+180,grayK:k,grayAmt:amt})}],['拒绝',()=>{me.brand[k]=Math.min(100,me.brand[k]+3);notify('biz','你拒绝了保健品大单','用户口碑小幅上升')}]]}}},
   adRival:{t:'对手想买你的广告位',need:me=>NK.some(k=>me.users[k]>5e4)&&G.cos.some(c=>c.ai&&!c.dead&&(atWar(0,c.id)||warH(0,c.id)>0)),f:me=>{const r=pick(G.cos.filter(c=>c.ai&&!c.dead&&(atWar(0,c.id)||warH(0,c.id)>0))),k=NK.filter(x=>me.users[x]>5e4).sort((a,b)=>me.users[b]-me.users[a])[0],amt=Math.round(clamp(r.cash*0.04,2e5,2e7)/1e4)*1e4;
     return{body:`${r.av} 正在与你商战的「${r.name}」想在你的「${NET[k].n}」包下一轮大促广告，出价 ${fmt(amt)}。接单能赚钱，但会帮对手把品牌推高。`,opts:[['接单 '+fmt(amt),()=>{if(r.cash<amt){toast('对方资金不足，撤单了');return}r.cash-=amt;me.cash+=amt;me.m.net+=amt;me.m.netAd=(me.m.netAd||0)+amt;for(const p of FINAL)if(r.ad[p]>0)r.brand[p]=Math.min(100,r.brand[p]+6);addRel(0,r.id,8)}],['拒绝',()=>{addRel(0,r.id,-5);notify('war','你拒绝了对手的广告',`${r.name}的大促声量受挫`)}]]}}}});
+
+/* ===== AI 广告策略：七种打法 + 渠道偏好 + 动态调整 ===== */
+const AD_STRAT={
+  ratio:{n:'比例稳投',ic:'📏',d:'按各商品销售额，固定拿收入的一定比例投广告'},
+  blitz:{n:'品牌轰炸',ic:'💣',d:'重金砸向一两款高毛利旗舰商品，品牌落后时加码'},
+  launch:{n:'新品冲量',ic:'🚀',d:'新上架、品牌落后的商品拿大头预算，抢认知'},
+  sniper:{n:'竞争狙击',ic:'🎯',d:'盯住领先对手的广告投入跟投加码，商战时火力翻倍'},
+  counter:{n:'逆周期',ic:'🔄',d:'经济差、广告便宜时加大投放，繁荣时收缩'},
+  frugal:{n:'节俭维持',ic:'🪙',d:'几乎不打广告，只在品牌快掉光时补一点，把钱省下来打价格'},
+  pulse:{n:'大促脉冲',ic:'🎉',d:'平时少投，双十一、年货节、618 前集中爆发'}};
+const AD_CH={online:{n:'线上派',m:1.5},neutral:{n:'均衡',m:1},trad:{n:'传统媒体派',m:0.6}};
+const AD_MAP={spark:['sniper','online'],aurora:['blitz','neutral'],hongyuan:['frugal','trad'],yunfan:['launch','online'],dingsheng:['ratio','trad'],jinsui:['counter','trad'],jinxiu:['blitz','neutral'],panshi:['frugal','trad'],lanhai:['counter','neutral'],qinghe:['pulse','trad'],quantum:['launch','online'],lexiang:['launch','online'],dongfang:['pulse','trad'],kangning:['ratio','neutral'],tianmi:['blitz','neutral']};
+function adStratOf(c){if(!c.adS){const m=!c.entrant&&AD_MAP[c.sk];c.adS=m?m[0]:pick(Object.keys(AD_STRAT));c.adCh=m?m[1]:pick(['online','neutral','neutral','trad'])}return c.adS}
+const adChMul=c=>c.ai?(AD_CH[c.adCh]||AD_CH.neutral).m:1;
+// 广告主对平台的偏好：AI 不给商战对手送钱（抵制），更愿意投给同一股权联盟/控股方的平台
+const adPref=(a,owner)=>{if(a.id===owner)return 1;if(a.ai&&(atWar(a.id,owner)||warH(a.id,owner)>0))return 0;return(GRP[a.id]!=null&&GRP[a.id]===GRP[owner])||stake(owner,a.id)>=0.51||stake(a.id,owner)>=0.51?2:1};
+const PULSE=[2.5,1.2,0.5,0.5,0.6,2,0.6,0.5,0.6,0.8,3,2.5];// 1 月年货节 … 6 月 618 … 11 月双十一
+function aiAdPlan(c){const s=adStratOf(c),lm=c.months[c.months.length-1],rev=lm?lm.rev:0,dk=[0.7,1,1.3][(G.aiLv??1)];
+  const sv={},mg={};let tot=0;c.adFirst=c.adFirst||{};
+  for(const b of G.b)if(b.o===c.id&&isRetail(b))for(const sl of b.slots){const v=(sl.sold||0)*sl.price;sv[sl.p]=(sv[sl.p]||0)+v;mg[sl.p]=(mg[sl.p]||0)+(sl.sold||0)*Math.max(0,sl.price-G.imp[sl.p]);tot+=v;if(c.adFirst[sl.p]==null)c.adFirst[sl.p]=G.day}
+  const ps=Object.keys(sv);for(const p of FINAL)c.ad[p]=0;if(!ps.length||rev<=0){c.adMo=0;return}
+  const rivalB=p=>{let m=0;for(const x of G.cos)if(x.id!==c.id&&!x.dead)m=Math.max(m,x.brand[p]||0);return m};
+  const enemy=G.cos.filter(x=>!x.dead&&x.id!==c.id&&(atWar(c.id,x.id)||warH(c.id,x.id)>0));
+  let bud=0,w={};
+  if(s==='ratio'){bud=rev*0.025;w=sv}
+  else if(s==='blitz'){const top=ps.slice().sort((a,b)=>mg[b]-mg[a]).slice(0,2);bud=rev*0.06*(top.some(p=>rivalB(p)>c.brand[p])?1.3:1);for(const p of ps)w[p]=sv[p]/tot*0.3+(top.includes(p)?0.7/top.length:0)}
+  else if(s==='launch'){bud=rev*0.035;const avg=tot/ps.length;for(const p of ps){const isNew=G.day-c.adFirst[p]<150,gap=Math.max(0,rivalB(p)-c.brand[p]);w[p]=(sv[p]+(isNew?avg*2:0))*(1+gap/50)}}
+  else if(s==='sniper'){for(const p of ps){let m=0,war=false;for(const x of G.cos){if(x.dead||x.id===c.id)continue;const a=(x.ad[p]||0)*30;if(a>m)m=a;if(a>0&&enemy.includes(x))war=true}const t=Math.max(sv[p]*0.01,m*1.2*(war?1.5:1));w[p]=t;bud+=t}bud=Math.min(bud,rev*0.07);}
+  else if(s==='counter'){const cyc=MM.dem<0.97?1.9:MM.dem>1.05?0.6:1,px=(G.adm&&G.adm.px)||1;bud=rev*0.025*cyc*(px<1?1.2:1);w=sv}
+  else if(s==='frugal'){for(const p of ps)if(c.brand[p]<25)w[p]=sv[p];bud=Object.keys(w).length?rev*0.008:0}
+  else if(s==='pulse'){const m=new Date(G.date).getUTCMonth();bud=rev*0.02*PULSE[m];w=sv}
+  // 商战：所有打法都在与敌人重叠的商品上加码 30%
+  if(enemy.length)for(const p of ps)if(w[p]&&G.b.some(b=>isRetail(b)&&enemy.some(e=>e.id===b.o)&&b.slots.some(x=>x.p===p)))w[p]*=1.3;
+  bud*=dk;if(c.cash<0)bud*=0.15;else if(c.cash<bud*3)bud*=0.5;
+  const wt=Object.values(w).reduce((a,b)=>a+b,0);for(const p of ps)c.ad[p]=wt>0&&w[p]?Math.round(bud*w[p]/wt/30/100)*100:0;
+  c.adMo=FINAL.reduce((a,p)=>a+c.ad[p],0)*30;c.adTop=ps.filter(p=>c.ad[p]>0).sort((a,b)=>c.ad[b]-c.ad[a]).slice(0,3)}
+// 每年复盘：业绩下滑就换打法
+function aiAdReview(c){const ms=c.months;if(ms.length<24||G.day%365>31)return;const y1=ms.slice(-12).reduce((a,m)=>a+m.rev,0),y0=ms.slice(-24,-12).reduce((a,m)=>a+m.rev,0),s=adStratOf(c);
+  if(y0>0&&y1<y0*0.85&&rnd()<0.4){const opts=Object.keys(AD_STRAT).filter(k=>k!==s&&k!=='frugal'),n=pick(opts);c.adS=n;addNews(`📣 ${c.name} 营收下滑 ${((1-y1/y0)*100).toFixed(0)}%，广告策略由「${AD_STRAT[s].n}」改为「${AD_STRAT[n].n}」`)}
+  else if(s!=='frugal'&&c.cash<0&&rnd()<0.3){c.adS0=s;c.adS='frugal';addNews(`📣 ${c.name} 现金吃紧，广告策略收缩为「节俭维持」`)}
+  else if(s==='frugal'&&c.adS0&&c.cash>y1/12){c.adS=c.adS0;delete c.adS0;addNews(`📣 ${c.name} 资金回暖，恢复「${AD_STRAT[c.adS].n}」广告打法`)}}
 /* ================= AI ================= */
 const makes=c=>new Set(G.b.filter(b=>b.o===c.id&&b.prod&&P[b.prod]).map(b=>b.prod));
 const sellsOf=c=>{const s=new Set();for(const b of G.b)if(b.o===c.id&&isRetail(b))b.slots.forEach(x=>s.add(x.p));return s};
@@ -972,10 +1013,7 @@ function aiBuild(c,type,ci,central,prod){const city=G.cities[ci],lot=findLot(cit
   const cost=BT[type].cost+landPrice(city,lot.x,lot.y);if(c.cash<cost+4e5)return null;const b=placeBuilding(c,type,ci,lot.x,lot.y,false);if(!b)return null;setupB(c,b,prod);return b}
 function aiMonth(c){
   const st=c.style;
-  // 商品广告预算：上月零售收入的 1.5%~3.5%（随难度），按各商品销售额分配；现金紧张时停投
-  {const lm=c.months[c.months.length-1],rate=[0.015,0.025,0.035][(G.aiLv??1)]*(st.price<1?0.8:1.15),bud=c.cash>0?(lm?lm.rev:0)*rate/30:0,w={};let tot=0;
-    for(const b of G.b)if(b.o===c.id&&isRetail(b))for(const sl of b.slots){const v=(sl.sold||0)*sl.price;w[sl.p]=(w[sl.p]||0)+v;tot+=v}
-    for(const p of FINAL)c.ad[p]=tot>0&&w[p]?Math.round(bud*w[p]/tot/100)*100:0}
+  aiAdReview(c);aiAdPlan(c);// 商品广告：按各自的广告策略分配预算（见 05a-internet-ads.js）
   for(const b of G.b.filter(b=>b.o===c.id&&(isRetail(b)||b.type==='factory'))){const op=opCost(b);
     if(isRetail(b)&&b.hist.length>=40){const r=b.hist.slice(-30).reduce((x,y)=>x+y,0)/30;if(r*0.3<op&&rnd()<0.5){c.cash+=sellVal(b);removeBuilding(b);addNews(`🔻 ${c.name}关闭了${G.cities[b.c].n}一家亏损门店`)}}
     else if(b.type==='factory'&&b.hist.length>=40&&b.hist.slice(-30).every(v=>v<1)){c.cash+=sellVal(b);removeBuilding(b)}}
@@ -1024,7 +1062,7 @@ function spawnEntrant(def){const yrs=G.day/365,used=new Set(G.cos.map(c=>c.sk));
   const id=G.cos.length,cash=Math.min(4e7,(2.4e6+yrs*6e5)*(0.8+rnd()*0.5))*aik().cash;
   const c=newCompany(id,base,cash,true);c.entrant=G.day;
   if(gen){const names=new Set(G.cos.map(x=>x.name));let n,k=0;do{n=pick(ENT_A)+pick(ENT_B)+pick(ENT_C);k++}while(names.has(n)&&k<30);c.name=n;c.founder=pick(ENT_F1)+pick(ENT_F2);c.av=pick(ENT_AV);c.col=hslHex(rnd()*360,0.7,0.58)}
-  c.home=Math.floor(rnd()*G.cities.length);
+  c.home=Math.floor(rnd()*G.cities.length);c.adS=pick(Object.keys(AD_STRAT));c.adCh=pick(['online','neutral','neutral','trad']);
   // 后来者带着行业平均技术进场（打七折），不再从零开始
   const peers=G.cos.filter(x=>x.ai&&!x.dead&&x.id!==id);for(const p of ALLK){const avg=peers.length?peers.reduce((s,x)=>s+x.tech[p],0)/peers.length:0;c.tech[p]=Math.floor(avg*0.7*aik().tech)}
   for(const k of NK)c.brand[k]=3+rnd()*6;
@@ -1477,6 +1515,10 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       h+=`<div class="kpis"><div class="kpi"><b>${(sOn*100).toFixed(0)}%</b><span>广告预算投向线上的比例</span></div><div class="kpi"><b>${fmt(A.tot||0)}</b><span>线上广告日成交额</span></div><div class="kpi"><b>${(A.px||1).toFixed(2)}</b><span>广告价格指数（宏观景气 × 广告主需求）</span></div><div class="kpi"><b>${(myAd/tot*100).toFixed(1)}%</b><span>我的平台广告份额</span></div></div>
       <div class="mu" style="font-size:12px;margin:6px 0">各公司在「市场」设的商品广告，${(sOn*100).toFixed(0)}% 投到线上平台（随互联网普及上升），其余投传统媒体。平台广告收入来自外部品牌广告主 + 游戏里各公司的广告预算。<b>被平台拒绝的广告主，只能转投效率更低的渠道，品牌增长变慢。</b></div>
       <h4>🏆 平台广告收入排行（今日）</h4><table><tr><th>平台</th><th>公司</th><th>日广告收入</th><th>份额</th><th>日其他收入</th><th>广告准入</th><th>灰色广告</th></tr>${pl.slice(0,12).map(q=>{const c=G.cos[q.id],p=adpOf(c,q.k);return`<tr${q.id===0?' style="background:rgba(56,189,248,.08)"':''}><td>${NET[q.k].ic} ${NET[q.k].n}</td><td>${nameOf(q.id)}</td><td>${fmt(q.ad)}</td><td>${(q.ad/tot*100).toFixed(1)}%</td><td>${fmt(q.oth)}</td><td>${AD_BAN[p.ban][0]}${p.ban&&q.id!==0&&!adAccepts(c,q.k,0)?' <span class="neg">⛔拒你</span>':''}</td><td>${p.gray?'⚠️ 接':'-'}</td></tr>`}).join('')||'<tr><td colspan="7" class="mu">还没有平台上线</td></tr>'}</table>`;
+      const ais=G.cos.filter(c=>c.ai&&!c.dead).sort((a,b)=>(b.adMo||0)-(a.adMo||0));
+      h+=`<h4 style="margin-top:12px">🎯 对手的广告打法</h4><div class="mu" style="font-size:12px;margin-bottom:4px">每家对手有自己的打法和渠道偏好，营收连续下滑时会换打法。AI 不会把广告投给正在和它商战的公司，更愿意投给同一股权联盟的平台。</div>
+      <table><tr><th>公司</th><th>打法</th><th>渠道</th><th>月广告预算</th><th>主推商品</th><th>当前效率</th></tr>${ais.map(c=>{const st=AD_STRAT[adStratOf(c)];return`<tr><td>${nameOf(c.id)}</td><td title="${st.d}">${st.ic} ${st.n}</td><td>${(AD_CH[c.adCh]||AD_CH.neutral).n}</td><td>${fmt(c.adMo||0)}</td><td>${(c.adTop||[]).map(p=>P[p].ic+' '+P[p].n).join('、')||'<span class="mu">暂停投放</span>'}</td><td>${c.adMo?Math.round((c._adEff??1)*100)+'%':'-'}</td></tr>`}).join('')}</table>
+      <div class="mu" style="font-size:11px;margin-top:4px">${Object.values(AD_STRAT).map(x=>`${x.ic} <b>${x.n}</b>：${x.d}`).join('　')}</div>`;
       const src={};let srcT=0;for(const k in lm.byk||{}){const bk=lm.byk[k];for(const n in bk.ext){src['e:'+n]=(src['e:'+n]||0)+bk.ext[n];srcT+=bk.ext[n]}for(const id in bk.co){src['c:'+id]=(src['c:'+id]||0)+bk.co[id];srcT+=bk.co[id]}if(bk.gray){src['g']=(src['g']||0)+bk.gray;srcT+=bk.gray}}
       const rows=Object.entries(src).sort((a,b)=>b[1]-a[1]).slice(0,14);
       h+=`<h4 style="margin-top:12px">📒 谁在我的平台投广告（${live?'本月至今':'上月'}）</h4>${rows.length?`<table><tr><th>广告主</th><th>类型</th><th>金额</th><th>占比</th></tr>${rows.map(([k,v])=>{let n,tp;if(k==='g'){n='🧪 P2P 理财 / 神奇保健品';tp='<span class="neg">灰色广告</span>'}else if(k[0]==='e'){const e=EXT_ADV.find(x=>x[0]===k.slice(2));n=e[1]+' '+e[0]+'品牌';tp='外部广告主'}else{n=nameOf(+k.slice(2));tp=atWar(0,+k.slice(2))?'<span class="neg">商战对手</span>':'游戏内公司'}return`<tr><td>${n}</td><td>${tp}</td><td>${fmt(v)}</td><td>${(v/srcT*100).toFixed(1)}%</td></tr>`}).join('')}</table>`:'<div class="mu">你还没有上线的互联网平台。</div>'}`;

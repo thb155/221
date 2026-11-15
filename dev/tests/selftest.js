@@ -89,6 +89,12 @@
     T('电商佣金率影响收入，灰色广告提高广告收入', () => { const me=G.cos[0]; me.tech.ecom=5; me.users.ecom=2e5; const p=adpOf(me,'ecom'); p.take=0.05; me.adm=null; run(1); const a=me.adm.byk.ecom.oth; p.take=0.1; me.adm=null; run(1); const b=me.adm.byk.ecom.oth;
       const q=adpOf(me,'search'); q.gray=0; me.adm=null; run(1); const g0=me.adm.byk.search.ad; q.gray=1; me.adm=null; run(1); const g1=me.adm.byk.search.ad; q.gray=0;
       return (b>a*1.6 && g1>g0*1.15) || `佣金 ${a}→${b} 灰色 ${g0}→${g1}`; });
+    T('AI 广告打法多样，预算分配各不相同', () => { fresh({picks:AI_DEF.map(a=>a.k)}); run(365*2+20); const ai=G.cos.filter(c=>c.ai&&!c.dead); const kinds=new Set(ai.map(c=>adStratOf(c)));
+      const bad=ai.find(c=>!finite(c.adMo||0)||FINAL.some(p=>!finite(c.ad[p])||c.ad[p]<0)); const spenders=ai.filter(c=>c.adMo>0).length;
+      const ratios=ai.filter(c=>c.adMo>0&&c.months.length).map(c=>c.adMo/Math.max(1,c.months[c.months.length-1].rev)); const spread=ratios.length?Math.max(...ratios)/Math.max(1e-6,Math.min(...ratios)):0;
+      return (kinds.size>=6 && !bad && spenders>=5 && spread>2) || `打法 ${kinds.size} 投放 ${spenders} 差异 ${spread.toFixed(2)} ${bad?bad.name:''}`; });
+    T('大促脉冲型在双十一前加码', () => { const c=G.cos.find(x=>x.ai&&!x.dead&&x.months.length&&x.months[x.months.length-1].rev>0); c.adS='pulse'; c.cash=Math.max(c.cash,1e8); const d0=G.date;
+      G.date=Date.UTC(1993,10,1); aiAdPlan(c); const nov=c.adMo; G.date=Date.UTC(1993,7,1); aiAdPlan(c); const aug=c.adMo; G.date=d0; return (nov>aug*3) || `11月 ${nov} 8月 ${aug}`; });
     T('互联网窗口三个页签都能打开', () => { boot(); for(const t of ['ov','ad','pol']){ netTab=t; openWin('net'); if(!$('#mb').innerHTML.length) return t; } netTab='ov'; closeModal(); return true; });
     T('所有窗口都能打开', () => {
       fresh(); run(400);

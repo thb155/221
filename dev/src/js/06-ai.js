@@ -14,10 +14,7 @@ function aiBuild(c,type,ci,central,prod){const city=G.cities[ci],lot=findLot(cit
   const cost=BT[type].cost+landPrice(city,lot.x,lot.y);if(c.cash<cost+4e5)return null;const b=placeBuilding(c,type,ci,lot.x,lot.y,false);if(!b)return null;setupB(c,b,prod);return b}
 function aiMonth(c){
   const st=c.style;
-  // 商品广告预算：上月零售收入的 1.5%~3.5%（随难度），按各商品销售额分配；现金紧张时停投
-  {const lm=c.months[c.months.length-1],rate=[0.015,0.025,0.035][(G.aiLv??1)]*(st.price<1?0.8:1.15),bud=c.cash>0?(lm?lm.rev:0)*rate/30:0,w={};let tot=0;
-    for(const b of G.b)if(b.o===c.id&&isRetail(b))for(const sl of b.slots){const v=(sl.sold||0)*sl.price;w[sl.p]=(w[sl.p]||0)+v;tot+=v}
-    for(const p of FINAL)c.ad[p]=tot>0&&w[p]?Math.round(bud*w[p]/tot/100)*100:0}
+  aiAdReview(c);aiAdPlan(c);// 商品广告：按各自的广告策略分配预算（见 05a-internet-ads.js）
   for(const b of G.b.filter(b=>b.o===c.id&&(isRetail(b)||b.type==='factory'))){const op=opCost(b);
     if(isRetail(b)&&b.hist.length>=40){const r=b.hist.slice(-30).reduce((x,y)=>x+y,0)/30;if(r*0.3<op&&rnd()<0.5){c.cash+=sellVal(b);removeBuilding(b);addNews(`🔻 ${c.name}关闭了${G.cities[b.c].n}一家亏损门店`)}}
     else if(b.type==='factory'&&b.hist.length>=40&&b.hist.slice(-30).every(v=>v<1)){c.cash+=sellVal(b);removeBuilding(b)}}
@@ -66,7 +63,7 @@ function spawnEntrant(def){const yrs=G.day/365,used=new Set(G.cos.map(c=>c.sk));
   const id=G.cos.length,cash=Math.min(4e7,(2.4e6+yrs*6e5)*(0.8+rnd()*0.5))*aik().cash;
   const c=newCompany(id,base,cash,true);c.entrant=G.day;
   if(gen){const names=new Set(G.cos.map(x=>x.name));let n,k=0;do{n=pick(ENT_A)+pick(ENT_B)+pick(ENT_C);k++}while(names.has(n)&&k<30);c.name=n;c.founder=pick(ENT_F1)+pick(ENT_F2);c.av=pick(ENT_AV);c.col=hslHex(rnd()*360,0.7,0.58)}
-  c.home=Math.floor(rnd()*G.cities.length);
+  c.home=Math.floor(rnd()*G.cities.length);c.adS=pick(Object.keys(AD_STRAT));c.adCh=pick(['online','neutral','neutral','trad']);
   // 后来者带着行业平均技术进场（打七折），不再从零开始
   const peers=G.cos.filter(x=>x.ai&&!x.dead&&x.id!==id);for(const p of ALLK){const avg=peers.length?peers.reduce((s,x)=>s+x.tech[p],0)/peers.length:0;c.tech[p]=Math.floor(avg*0.7*aik().tech)}
   for(const k of NK)c.brand[k]=3+rnd()*6;
