@@ -3,7 +3,7 @@ let G=null,speed=1,sel=null,buildMode=null,hover=null,acc=0;
 let Q=1;try{const q=localStorage.getItem('cel-q');if(q!==null)Q=+q}catch(e){}
 const cam={x:0,y:0,z:1};let cars=[],smoke=[],floats=[];
 const CUR=()=>G.cities[G.cur];
-function blankM(){return{rev:0,net:0,rent:0,dep:0,whole:0,purch:0,op:0,sal:0,logi:0,b2b:0,ad:0,int:0,tax:0}}
+function blankM(){return{rev:0,net:0,netAd:0,rent:0,dep:0,whole:0,purch:0,op:0,sal:0,logi:0,b2b:0,ad:0,int:0,tax:0}}
 function newCompany(id,def,cash,ai){
   const c={id,name:def.n,founder:def.f,av:def.av||'😎',col:def.col,style:def,sk:def.k,cash,ai,loan:0,inv:{},brand:{},tech:{},rp:{},ad:{},monet:{},users:{},m:blankM(),months:[],nwHist:[],sent:1,dead:false,negDays:0,autoImport:true,maxStock:3000,acquired:0,perk:def.perk||null,home:def.home||0,ph:[]};
   ALLK.forEach(p=>{c.brand[p]=ai?5+rnd()*10:0;c.tech[p]=0;c.rp[p]=0;c.ad[p]=0;c.monet[p]=1;c.users[p]=0});

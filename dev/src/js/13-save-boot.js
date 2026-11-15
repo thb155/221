@@ -1,5 +1,5 @@
 /* ================= 存档 / 启动 ================= */
-const SKEY='capital-empire-lab-v13';const SKIP=new Set(['style','dens','resd']);
+const SKEY='capital-empire-lab-v13';const SKIP=new Set(['style','dens','resd','_ps','_psd','plats']);
 const NSLOT=8;
 const ser=()=>JSON.stringify(G,(k,v)=>SKIP.has(k)?undefined:v);
 function gameDateStr(){const d=new Date(G.date);return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`}

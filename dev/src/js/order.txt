@@ -4,6 +4,7 @@
 03-simulation.js
 04-war-alliance.js
 05-inbox-decisions-diplomacy.js
+05a-internet-ads.js
 06-ai.js
 07-goals.js
 08-render.js

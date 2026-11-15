@@ -506,7 +506,7 @@ let G=null,speed=1,sel=null,buildMode=null,hover=null,acc=0;
 let Q=1;try{const q=localStorage.getItem('cel-q');if(q!==null)Q=+q}catch(e){}
 const cam={x:0,y:0,z:1};let cars=[],smoke=[],floats=[];
 const CUR=()=>G.cities[G.cur];
-function blankM(){return{rev:0,net:0,rent:0,dep:0,whole:0,purch:0,op:0,sal:0,logi:0,b2b:0,ad:0,int:0,tax:0}}
+function blankM(){return{rev:0,net:0,netAd:0,rent:0,dep:0,whole:0,purch:0,op:0,sal:0,logi:0,b2b:0,ad:0,int:0,tax:0}}
 function newCompany(id,def,cash,ai){
   const c={id,name:def.n,founder:def.f,av:def.av||'😎',col:def.col,style:def,sk:def.k,cash,ai,loan:0,inv:{},brand:{},tech:{},rp:{},ad:{},monet:{},users:{},m:blankM(),months:[],nwHist:[],sent:1,dead:false,negDays:0,autoImport:true,maxStock:3000,acquired:0,perk:def.perk||null,home:def.home||0,ph:[]};
   ALLK.forEach(p=>{c.brand[p]=ai?5+rnd()*10:0;c.tech[p]=0;c.rp[p]=0;c.ad[p]=0;c.monet[p]=1;c.users[p]=0});
@@ -715,14 +715,15 @@ function simDay(){
   G.adopt=clamp(0.04+0.96*Math.pow(clamp((yr-1990)/25,0,1),1.5)+MM.adopt,0.02,1);
   for(const k of NK){const U=totPop*NET[k].pen*G.adopt*netStage(k,yr);G.netU[k]=U;
     const list=alive.filter(c=>c.tech[k]>=1);let sum=0;const A={};
-    for(const c of list){A[c.id]=Math.pow(techQ(c.tech[k])/50,2)*(1+c.brand[k]/40)*Math.pow(c.monet[k],-0.8)*(1+0.15*Math.log10(1+c.users[k]));sum+=A[c.id]}
+    for(const c of list){A[c.id]=Math.pow(techQ(c.tech[k])/50,2)*(1+c.brand[k]/40)*Math.pow(c.monet[k],-0.8)*netAttr(c,k)*(1+0.15*Math.log10(1+c.users[k]));sum+=A[c.id]}
     const totU=list.reduce((x,c)=>x+c.users[k],0),sat=U>0?Math.min(1,totU/U):1,gr=0.03*(1-0.7*sat*sat);G.netSat=G.netSat||{};G.netSat[k]=sat;
     for(const c of list){const target=U*A[c.id]/(0.4+sum),room=capOf(c)-usersOf(c)+c.users[k],dlt=target-c.users[k];
       c.users[k]=clamp(c.users[k]+dlt*(dlt>0?gr:0.03),0,Math.max(0,Math.min(room,U)));if(G.anti&&G.anti[c.id+'_'+k]>G.day)c.monet[k]=Math.min(c.monet[k],1);
-      const r=c.users[k]*NET[k].arpu*c.monet[k];c.cash+=r;c.m.net+=r;if(c.id===0&&r>0){const nb=G.b.filter(x=>x.o===0&&x.type==='net'&&x.prod===k);nb.forEach(x=>segAcc(x,'rev',r/nb.length))}if(U>0)c.brand[k]=Math.min(100,c.brand[k]+c.users[k]/U*0.08)}}
+      if(U>0)c.brand[k]=Math.min(100,c.brand[k]+c.users[k]/U*0.08)}}
+  netRevDay(alive);// 广告市场 + 佣金/会员等收入
   // 费用
   for(const c of alive){
-    for(const p of FINAL.concat(NK)){c.brand[p]*=0.996;if(c.ad[p]>0){const a=c.ad[p];c.cash-=a;c.m.ad+=a;c.brand[p]=Math.min(100,c.brand[p]+Math.sqrt(a)/90*(1+0.8*exS(c,'cmo')))}}
+    for(const p of FINAL.concat(NK)){c.brand[p]*=0.996;if(c.ad[p]>0){const a=c.ad[p];c.cash-=a;c.m.ad+=a;c.brand[p]=Math.min(100,c.brand[p]+Math.sqrt(a)/90*(1+0.8*exS(c,'cmo'))*(NET[p]?1:(c._adEff??1)))}}
     const srv=usersOf(c)*0.02;c.cash-=srv;c.m.op+=srv;if(c.id===0&&srv>0){const ds=G.b.filter(x=>x.o===0&&x.type==='dc');ds.forEach(x=>segAcc(x,'op',srv/ds.length))}
     for(let ci=0;ci<G.cities.length;ci++){const cap=capCity(c,ci);for(const p of PK){const cv=c.ci[ci][p];if(cv.q>cap){const ex=cv.q-cap,r=ex*G.imp[p]*0.8;cv.q=cap;c.inv[p].q=Math.max(0,c.inv[p].q-ex);c.cash+=r;c.m.whole+=r}}}
     if(c.loan>0){const i=c.loan*loanRate(c)/365;c.cash-=i;c.m.int+=i}if(c.cash>0){const dp=c.cash*depRate(c)/365;c.cash+=dp;c.m.dep+=dp}
@@ -742,7 +743,7 @@ function checkTech(c,p){while(c.rp[p]>=techNeed(c.tech[p])){c.rp[p]-=techNeed(c.
   if(c.id===0)toast(`🔬 ${ic(p)} ${nm(p)} 技术 Lv${c.tech[p]}${NET[p]&&c.tech[p]===1?'，产品正式上线！':''}`);
   else if(NET[p]&&c.tech[p]===1)addNews(`${c.av} ${c.founder}：${c.name}旗下「${NET[p].n}」正式上线`)}}
 const QN=['一季报','半年报','三季报','年报'];
-const sumM=(arr)=>{const o={rev:0,net:0,rent:0,whole:0,purch:0,op:0,sal:0,logi:0,ad:0,int:0,dep:0,tax:0,profit:0};for(const m of arr)for(const k in o)o[k]+=m[k]||0;return o};
+const sumM=(arr)=>{const o={rev:0,net:0,netAd:0,rent:0,whole:0,purch:0,op:0,sal:0,logi:0,ad:0,int:0,dep:0,tax:0,profit:0};for(const m of arr)for(const k in o)o[k]+=m[k]||0;return o};
 const mYear=m=>+String(m.label).split('.')[0],mMon=m=>+String(m.label).split('.')[1];
 function buildReport(d){const me=G.cos[0],m=me.months[me.months.length-1];if(!m)return;const mo=d.getUTCMonth(),y=d.getUTCFullYear();
   notify('report',`${m.label} 经营简讯`,`当月净利润 ${fmt(m.profit)}`,false);
@@ -775,7 +776,7 @@ let repSel=0;
 const REVof=r=>r.rev+r.net+r.rent+r.whole;
 function monthEnd(d){
   scnCheck();renderGoal();
-  macroMonth();genMonth(d);hrMonth(G.cos[0]);warMonth();entrantMonth();
+  macroMonth();genMonth(d);hrMonth(G.cos[0]);warMonth();entrantMonth();netAdMonth();
   // 楼市周期
   for(const city of G.cities){let ev='';
     if(rnd()<0.05){city.trend+=0.02;ev=`🔥 ${city.n}楼市火爆，地价快速上涨`}else if(rnd()<0.04){city.trend-=0.028;ev=`🧊 ${city.n}出台楼市调控，地价承压`}
@@ -884,6 +885,74 @@ function bankrupt(c){for(const b of G.b.filter(b=>b.o===c.id))removeBuilding(b);
   if(G.hold[c.id]){toast(`📉 你持有的 ${c.name} 破产，股票归零`);delete G.hold[c.id];delete G.cost[c.id]}
   addNews(`💥 ${c.av} ${c.founder}的${c.name}资不抵债，宣告破产！`);if(sel&&sel.o===c.id)select(null)}
 
+/* ===== 互联网细化：广告市场 · 变现渠道 · 平台策略 ===== */
+// ad = 该产品收入中广告的占比；o = 其余收入来源
+const NETX={portal:{ad:0.85,o:'增值服务（邮箱/会员）'},search:{ad:0.92,o:'企业服务（竞价工具）'},ecom:{ad:0.35,o:'交易佣金'},social:{ad:0.5,o:'游戏与会员'},video:{ad:0.6,o:'直播打赏与会员'}};
+// 外部广告主行业：[名称, 图标, 1990 权重, 互联网普及后权重]
+const EXT_ADV=[['快消日化','🧴',1,1],['汽车','🚗',0.5,1.3],['房地产','🏢',0.6,1.1],['金融保险','🏦',0.5,1.2],['游戏','🎮',0.1,1.5],['教育培训','📚',0.3,1.1],['本地生活','🍜',0.1,1.4],['医药保健','💊',0.5,0.8],['3C 数码','📱',0.3,1.2]];
+const AD_BAN=[['全部接受','任何公司的广告都接'],['拒绝商战对手','正在与你商战/敌对的公司不能在你的平台投放'],['拒绝所有同行','货架上卖同类商品的公司都不能投放（份额高时有反垄断风险）']];
+const adpOf=(c,k)=>{c.adp=c.adp||{};return c.adp[k]||(c.adp[k]={ban:c.ai?1:0,gray:c.ai&&c.id%4===1?1:0,self:1,take:0.05})};
+const onlineShare=()=>clamp(0.04+0.66*(G.adopt||0),0.03,0.75);
+const adMacro=()=>(MM.dem||1)*Math.sqrt(MM.sent||1);
+function prodSets(){if(G._psd===G.day&&G._ps)return G._ps;const m={};for(const b of G.b)if(isRetail(b)){const s=m[b.o]||(m[b.o]=new Set());for(const sl of b.slots)s.add(sl.p)}G._ps=m;G._psd=G.day;return m}
+const peersOf=(a,b)=>{const ps=prodSets(),A=ps[a],B=ps[b];if(!A||!B)return false;for(const p of A)if(B.has(p))return true;return false};
+function adAccepts(owner,k,adv){if(owner.id===adv)return true;const p=adpOf(owner,k);if(p.ban>=1&&(atWar(owner.id,adv)||warH(owner.id,adv)>0))return false;if(p.ban>=2&&peersOf(owner.id,adv))return false;return true}
+// 平台吸引力修正（佣金率、灰色广告）
+const netAttr=(c,k)=>{const p=adpOf(c,k);return(k==='ecom'?Math.pow(p.take/0.05,-0.4):1)*(p.gray?0.93:1)};
+const extW=()=>EXT_ADV.map(e=>e[2]+(e[3]-e[2])*(G.adopt||0));
+function adBook(c){if(!c.adm)c.adm={byk:{},out:{},rej:0,trad:0,self:0};return c.adm}
+function bookK(c,k){const m=adBook(c);return m.byk[k]||(m.byk[k]={ad:0,oth:0,gray:0,ext:{},co:{}})}
+
+function netRevDay(alive){
+  const sOn=onlineShare(),mac=adMacro(),plats=[];let invTot=0;
+  for(const c of alive)for(const k of NK){if(c.tech[k]<1||c.users[k]<=0)continue;const base=c.users[k]*NET[k].arpu*c.monet[k],x=NETX[k],p=adpOf(c,k);
+    const inv=base*x.ad*(1+0.025*Math.min(c.tech[k],20));// 技术越高投放越精准，广告位越值钱
+    let oth=base*(1-x.ad);if(k==='ecom')oth*=p.take/0.05;
+    plats.push({c,k,inv,oth,p,int:0,from:null});invTot+=inv}
+  // 内部广告主：每家公司商品广告预算的线上部分
+  let intTot=0;
+  for(const a of alive){let A=0;for(const p of FINAL)A+=a.ad[p]||0;a._adEff=1;if(A<=0)continue;
+    const on=A*sOn;if(a.id===0){const m=adBook(a);m.trad+=A-on}
+    if(!plats.length){if(a.id===0)adBook(a).trad+=on;continue}
+    const el=plats.filter(q=>adAccepts(q.c,q.k,a.id)),tot=el.reduce((s,q)=>s+q.inv,0),selfB=el.reduce((s,q)=>s+(q.c.id===a.id&&q.p.self?q.inv:0),0),f=Math.min(1.5,(tot+selfB)/invTot);
+    a._adEff=(1-sOn)+sOn*(0.6+0.6*f);// 自家平台优先展示：自家广告位权重翻倍
+    if(tot<=0){if(a.id===0)adBook(a).rej+=on;continue}
+    for(const q of el){const v=on*q.inv/tot;
+      if(q.c.id===a.id){a.cash+=v;a.m.ad-=v;if(a.id===0)adBook(a).self+=v;continue}// 自家平台：集团内部结算，不花钱
+      q.int+=v;(q.from||(q.from={}))[a.id]=(q.from[a.id]||0)+v;intTot+=v;if(a.id===0){const o=adBook(a).out;o[q.c.id]=(o[q.c.id]||0)+v}}}
+  const ext=invTot*0.82*mac,W=extW(),Ws=W.reduce((s,x)=>s+x,0);let adTot=0;
+  for(const q of plats){const c=q.c,k=q.k,e=invTot?q.inv/invTot*ext:0,gr=q.p.gray?q.inv*0.35*mac:0,ad=e+q.int+gr,r=ad+q.oth;
+    c.cash+=r;c.m.net+=r;c.m.netAd=(c.m.netAd||0)+ad;adTot+=ad;q.ad=ad;
+    if(c.id===0){const bk=bookK(c,k);bk.ad+=ad;bk.oth+=q.oth;bk.gray+=gr;EXT_ADV.forEach((x,i)=>bk.ext[x[0]]=(bk.ext[x[0]]||0)+e*W[i]/Ws);if(q.from)for(const id in q.from)bk.co[id]=(bk.co[id]||0)+q.from[id];
+      const nb=G.b.filter(x=>x.o===0&&x.type==='net'&&x.prod===k);nb.forEach(x=>segAcc(x,'rev',r/nb.length))}}
+  G.adm={inv:invTot,ext,int:intTot,tot:adTot,px:invTot?(ext+intTot)/invTot/0.82:1,sOn,plats:plats.map(q=>({id:q.c.id,k:q.k,ad:q.ad,oth:q.oth}))}}
+
+function netAdMonth(){const me=G.cos[0];
+  for(const c of G.cos){if(c.dead)continue;c.adl=c.adm||null;c.adm=null}
+  for(const c of G.cos){if(c.dead)continue;for(const k of NK){if(c.tech[k]<1||c.users[k]<=0)continue;const p=adpOf(c,k),U=G.netU[k]||0,sh=U?c.users[k]/U:0,mrev=c.users[k]*NET[k].arpu*c.monet[k]*30;
+    // 灰色广告翻车
+    if(p.gray&&rnd()<0.06){const fine=Math.round(mrev*1.3);c.cash-=fine;c.m.op+=fine;c.users[k]*=0.88;c.brand[k]*=0.85;
+      addNews(`🚨 虚假广告曝光：${c.name}「${NET[k].n}」投放的 P2P/保健品广告引发维权，罚款 ${fmt(fine)}，用户流失 12%`);
+      if(c.id===0)notify('biz',`🚨 虚假广告被曝光：${NET[k].n}`,`罚款 ${fmt(fine)}，用户流失 12%，品牌受损。可在「互联网 → 平台策略」关闭灰色广告。`,true)}
+    // 滥用市场支配地位
+    if(sh>0.45&&(p.ban>=2||(p.self&&sh>0.55))&&rnd()<0.07){const fine=Math.round(mrev*1.0);c.cash-=fine;c.m.op+=fine;p.ban=Math.min(p.ban,1);p.self=0;
+      addNews(`⚖️ 监管认定 ${c.name}「${NET[k].n}」滥用市场支配地位（排斥同行广告/自我优待），罚款 ${fmt(fine)} 并责令整改`);
+      if(c.id===0)notify('biz',`⚖️ 反垄断：${NET[k].n} 被责令整改`,`份额 ${(sh*100).toFixed(0)}%，罚款 ${fmt(fine)}。广告准入已改回「拒绝商战对手」，「自家商品优先展示」已关闭。`,true)}}}
+  // 大客户年框履约
+  const B=G.buff||{};if(B.frameK&&B.frameUntil>G.day&&me.monet[B.frameK]<1.5){const pen=Math.round(B.frameAmt*0.6);me.cash-=pen;me.m.op+=pen;notify('biz','📄 年框违约',`你降低了「${NET[B.frameK].n}」的广告位密度，违反年框合同，赔付 ${fmt(pen)}`,true);delete B.frameK}
+  if(B.grayRisk&&B.grayRisk<=G.day){const k=B.grayK;if(rnd()<0.35&&me.users[k]>0){const fine=Math.round(B.grayAmt*2);me.cash-=fine;me.m.op+=fine;me.users[k]*=0.85;me.brand[k]*=0.8;notify('biz','🚨 保健品广告大单翻车',`消费者集体投诉，罚款 ${fmt(fine)}，「${NET[k].n}」用户流失 15%`,true)}else notify('biz','保健品广告大单平稳结束','这次没出事，但下次就不一定了');delete B.grayRisk}
+  // AI 平台：份额高且与你关系很差时，会把你列入“同行拒投”
+  for(const c of G.cos){if(c.dead||!c.ai)continue;for(const k of NK){if(c.tech[k]<1)continue;const p=adpOf(c,k),U=G.netU[k]||0,sh=U?c.users[k]/U:0;
+    const want=(sh>0.35&&relOf(c.id,0)<-40)?2:1;if(want!==p.ban&&rnd()<0.3){p.ban=want;if(want===2&&G.cos[0].tech&&FINAL.some(x=>G.cos[0].ad[x]>0))notify('war',`📵 ${c.name} 的「${NET[k].n}」拒绝你的广告`,`对方以“同业竞争”为由拒绝你投放，你的广告效率下降。改善关系或自建平台可以破局。`,true)}}}}
+
+// 互联网相关的决策事件
+Object.assign(DEC,{
+  adFrame:{t:'大客户来谈年框',need:me=>NK.some(k=>me.users[k]>1e5),f:me=>{const k=NK.filter(x=>me.users[x]>1e5).sort((a,b)=>me.users[b]*NET[b].arpu-me.users[a]*NET[a].arpu)[0],e=pick(EXT_ADV.slice(1,5)),amt=Math.round(me.users[k]*NET[k].arpu*NETX[k].ad*60/1e4)*1e4;
+    return{body:`${e[1]} 一家头部${e[0]}品牌想在你的「${NET[k].n}」签一年广告框架合同，预付 ${fmt(amt)}。条件：一年内该产品的广告位密度保持「高」，否则赔付六成。`,opts:[['签约（预付 '+fmt(amt)+'）',()=>{me.cash+=amt;me.m.net+=amt;me.m.netAd=(me.m.netAd||0)+amt;me.monet[k]=1.6;Object.assign(G.buff,{frameK:k,frameUntil:G.day+365,frameAmt:amt});notify('biz','📄 年框已签',`「${NET[k].n}」广告位密度已调为「高」，保持一年`)}],['婉拒',()=>{}]]}}},
+  adGray:{t:'保健品广告大单',need:me=>NK.some(k=>me.users[k]>5e4),f:me=>{const k=NK.filter(x=>me.users[x]>5e4).sort((a,b)=>me.users[b]-me.users[a])[0],amt=Math.round(me.users[k]*NET[k].arpu*90/1e4)*1e4;
+    return{body:`一家“神奇保健品”厂商出三倍价格，想在你的「${NET[k].n}」投放半年广告，一次性支付 ${fmt(amt)}。半年后有约 35% 概率被曝光：罚款两倍、用户流失 15%。`,opts:[['接单 '+fmt(amt),()=>{me.cash+=amt;me.m.net+=amt;me.m.netAd=(me.m.netAd||0)+amt;Object.assign(G.buff,{grayRisk:G.day+180,grayK:k,grayAmt:amt})}],['拒绝',()=>{me.brand[k]=Math.min(100,me.brand[k]+3);notify('biz','你拒绝了保健品大单','用户口碑小幅上升')}]]}}},
+  adRival:{t:'对手想买你的广告位',need:me=>NK.some(k=>me.users[k]>5e4)&&G.cos.some(c=>c.ai&&!c.dead&&(atWar(0,c.id)||warH(0,c.id)>0)),f:me=>{const r=pick(G.cos.filter(c=>c.ai&&!c.dead&&(atWar(0,c.id)||warH(0,c.id)>0))),k=NK.filter(x=>me.users[x]>5e4).sort((a,b)=>me.users[b]-me.users[a])[0],amt=Math.round(clamp(r.cash*0.04,2e5,2e7)/1e4)*1e4;
+    return{body:`${r.av} 正在与你商战的「${r.name}」想在你的「${NET[k].n}」包下一轮大促广告，出价 ${fmt(amt)}。接单能赚钱，但会帮对手把品牌推高。`,opts:[['接单 '+fmt(amt),()=>{if(r.cash<amt){toast('对方资金不足，撤单了');return}r.cash-=amt;me.cash+=amt;me.m.net+=amt;me.m.netAd=(me.m.netAd||0)+amt;for(const p of FINAL)if(r.ad[p]>0)r.brand[p]=Math.min(100,r.brand[p]+6);addRel(0,r.id,8)}],['拒绝',()=>{addRel(0,r.id,-5);notify('war','你拒绝了对手的广告',`${r.name}的大促声量受挫`)}]]}}}});
 /* ================= AI ================= */
 const makes=c=>new Set(G.b.filter(b=>b.o===c.id&&b.prod&&P[b.prod]).map(b=>b.prod));
 const sellsOf=c=>{const s=new Set();for(const b of G.b)if(b.o===c.id&&isRetail(b))b.slots.forEach(x=>s.add(x.p));return s};
@@ -900,6 +969,10 @@ function aiBuild(c,type,ci,central,prod){const city=G.cities[ci],lot=findLot(cit
   const cost=BT[type].cost+landPrice(city,lot.x,lot.y);if(c.cash<cost+4e5)return null;const b=placeBuilding(c,type,ci,lot.x,lot.y,false);if(!b)return null;setupB(c,b,prod);return b}
 function aiMonth(c){
   const st=c.style;
+  // 商品广告预算：上月零售收入的 1.5%~3.5%（随难度），按各商品销售额分配；现金紧张时停投
+  {const lm=c.months[c.months.length-1],rate=[0.015,0.025,0.035][(G.aiLv??1)]*(st.price<1?0.8:1.15),bud=c.cash>0?(lm?lm.rev:0)*rate/30:0,w={};let tot=0;
+    for(const b of G.b)if(b.o===c.id&&isRetail(b))for(const sl of b.slots){const v=(sl.sold||0)*sl.price;w[sl.p]=(w[sl.p]||0)+v;tot+=v}
+    for(const p of FINAL)c.ad[p]=tot>0&&w[p]?Math.round(bud*w[p]/tot/100)*100:0}
   for(const b of G.b.filter(b=>b.o===c.id&&(isRetail(b)||b.type==='factory'))){const op=opCost(b);
     if(isRetail(b)&&b.hist.length>=40){const r=b.hist.slice(-30).reduce((x,y)=>x+y,0)/30;if(r*0.3<op&&rnd()<0.5){c.cash+=sellVal(b);removeBuilding(b);addNews(`🔻 ${c.name}关闭了${G.cities[b.c].n}一家亏损门店`)}}
     else if(b.type==='factory'&&b.hist.length>=40&&b.hist.slice(-30).every(v=>v<1)){c.cash+=sellVal(b);removeBuilding(b)}}
@@ -1344,7 +1417,7 @@ window.buyAuction=i=>{const a=G.auctions[i];if(!a)return;const city=G.cities[a.c
   me.cash-=price;const b=placeBuilding(me,'land',a.c,a.x,a.y,true);b.paid=price;G.auctions.splice(i,1);addNews(`🔨 ${me.name}在${city.n}土地拍卖中竞得一块地，成交 ${fmt(price)}`);toast('🔨 竞拍成功！可在地块上开发');openWin('re',true)};
 
 /* ================= 窗口 ================= */
-let finPer='m',ibTab='all',setTab='save',curWin=null,reTab='overview',hrTab='team',hrRole=null,finTab='is',subSel=null;
+let netTab='ov',finPer='m',ibTab='all',setTab='save',curWin=null,reTab='overview',hrTab='team',hrRole=null,finTab='is',subSel=null;
 let rpResume=0;
 function closeModal(){$('#modal').classList.add('hidden');curWin=null;if(rpResume){if(!speed&&G&&!G.over)setSpeed(rpResume);rpResume=0}}
 $('#mx').onclick=closeModal;$('#modal').addEventListener('pointerdown',e=>{if(e.target.id==='modal')closeModal()});
@@ -1385,15 +1458,40 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       h+=`<div class="row"><span>物业总估值 <b>${fmt(tv)}</b></span><span>今日租金 <b class="pos">${fmt(tr)}</b></span></div><table><tr><th>物业</th><th>城市</th><th>出租率</th><th>日租金</th><th>买入成本</th><th>估值</th><th>增值</th><th></th></tr>`;
       for(const b of list)h+=`<tr><td>${BT[b.type].ic} ${BT[b.type].n} ★${b.lv}</td><td>${G.cities[b.c].n}</td><td>${isRent(b)?(b.occ*100).toFixed(0)+'%':'-'}</td><td>${isRent(b)?fmt(b.out):'-'}</td><td>${fmt(b.paid)}</td><td>${fmt(bval(b))}</td><td class="${bval(b)>=b.paid?'pos':'neg'}">${fmt(bval(b)-b.paid)}</td><td><button onclick="goTo(${b.id})">管理</button></td></tr>`;
       if(!list.length)h+='<tr><td colspan="8" class="mu">你还没有物业。左侧「🏠 地产」分组可以买地、盖住宅楼和写字楼。</td></tr>';h+='</table>'}}
-  else if(w==='net'){t='🌐 互联网产业';const yr=yearNow();
-    h=`<div class="mu" style="margin-bottom:8px">互联网渗透率 ${(G.adopt*100).toFixed(1)}%（开局即可进入，逐年上升；各赛道到风口年进入爆发期）。建「互联网公司」开发产品（Lv1 上线），建「数据中心」承载用户。商业化越高单用户收入越高，但用户越容易流失。</div>
-    <div class="row"><span>我的服务器：${fnum(usersOf(me))} / ${fnum(capOf(me))} 用户</span><span>本月互联网收入 ${fmt(me.m.net)}</span></div><div class="mu" style="font-size:12px;margin:4px 0">用户上限 = 六城总人口 ${fnum(G.cities.reduce((x,c)=>x+c.pop,0))} × 产品渗透率 × 互联网普及度。渗透越接近上限增长越慢（见顶）；单个产品份额超过 60% 可能被反垄断罚款。</div>
-    <table><tr><th>产品</th><th>市场成熟度</th><th>用户上限</th><th>已渗透</th><th>我的用户</th><th>份额</th><th>技术</th><th>商业化</th><th>广告/日</th><th>领先者</th></tr>`;
-    for(const k of NK){const U=G.netU[k]||0;const lead=G.cos.filter(c=>!c.dead).sort((a,b)=>b.users[k]-a.users[k])[0];
+  else if(w==='net'){t='🌐 互联网产业';const yr=yearNow(),A=G.adm||{},lm=me.adl||me.adm||{byk:{},out:{},rej:0,trad:0,self:0},live=!me.adl;
+    const nameOf=id=>{const c=G.cos[id];return c?`<span style="color:${c.col}">${c.id===0?'🏠 我':c.name}</span>`:'?'};
+    h=`<div class="tabs">${[['ov','📊 总览'],['ad','📣 广告市场'],['pol','⚙️ 平台策略']].map(([k,v])=>`<button class="${netTab===k?'on':''}" onclick="netTab='${k}';openWin('net')">${v}</button>`).join('')}</div>`;
+    if(netTab==='ov'){
+    h+=`<div class="mu" style="margin-bottom:8px">互联网普及率 ${(G.adopt*100).toFixed(1)}%（开局即可进入，逐年上升；各赛道到风口年进入爆发期）。建「互联网公司」开发产品（Lv1 上线），建「数据中心」承载用户。广告位越密单用户收入越高，但用户越容易流失。</div>
+    <div class="row"><span>我的服务器：${fnum(usersOf(me))} / ${fnum(capOf(me))} 用户</span><span>本月互联网收入 ${fmt(me.m.net)}（广告 ${fmt(me.m.netAd||0)}）</span></div><div class="mu" style="font-size:12px;margin:4px 0">用户上限 = 六城总人口 ${fnum(G.cities.reduce((x,c)=>x+c.pop,0))} × 产品渗透率 × 互联网普及度。渗透越接近上限增长越慢（见顶）；单个产品份额超过 60% 可能被反垄断罚款。</div>
+    <table><tr><th>产品</th><th>市场成熟度</th><th>用户上限</th><th>已渗透</th><th>我的用户</th><th>份额</th><th>技术</th><th>广告位密度</th><th>推广/日</th><th>${live?'本月':'上月'}收入（广告 / ${'其他'}）</th><th>领先者</th></tr>`;
+    for(const k of NK){const U=G.netU[k]||0;const lead=G.cos.filter(c=>!c.dead).sort((a,b)=>b.users[k]-a.users[k])[0],bk=(lm.byk||{})[k];
       h+=`<tr><td>${NET[k].ic} ${NET[k].n}</td><td>${yr>=NET[k].year?'🔥 爆发':Math.round(netStage(k,yr)*100)+'%·'+NET[k].year}</td><td>${fnum(U)}</td><td style="width:90px"><div class="bar"><i style="width:${((G.netSat||{})[k]||0)*100}%;background:${((G.netSat||{})[k]||0)>0.85?'#f43f5e':'#22c55e'}"></i></div></td><td>${fnum(me.users[k])}${G.anti&&G.anti[0+'_'+k]>G.day?' ⚖️':''}</td><td>${U?(me.users[k]/U*100).toFixed(1):'0'}%</td><td>Lv${me.tech[k]}</td>
       <td><select onchange="G.cos[0].monet['${k}']=+this.value">${[[0.6,'低'],[1,'中'],[1.6,'高']].map(([v,l])=>`<option value="${v}" ${Math.abs(me.monet[k]-v)<0.05?'selected':''}>${l}</option>`).join('')}</select></td>
-      <td><input type="number" min="0" step="500" value="${me.ad[k]}" style="width:78px" onchange="G.cos[0].ad['${k}']=Math.max(0,+this.value||0)"></td><td>${lead&&lead.users[k]>0?`<span style="color:${lead.col}">${lead.name}</span> ${fnum(lead.users[k])}`:'-'}</td></tr>`}
-    h+='</table>'}
+      <td><input type="number" min="0" step="500" value="${me.ad[k]}" style="width:78px" onchange="G.cos[0].ad['${k}']=Math.max(0,+this.value||0)"></td><td>${bk?fmt(bk.ad)+' / '+fmt(bk.oth):'-'}</td><td>${lead&&lead.users[k]>0?`<span style="color:${lead.col}">${lead.name}</span> ${fnum(lead.users[k])}`:'-'}</td></tr>`}
+    h+='</table><div class="mu" style="font-size:12px;margin-top:6px">「推广/日」是给自家互联网产品拉新的推广费；商品广告在「市场」里设置，其中线上部分会投到各家平台（见「📣 广告市场」）。</div>'}
+    else if(netTab==='ad'){const sOn=onlineShare(),pl=(A.plats||[]).slice().sort((a,b)=>b.ad-a.ad),tot=pl.reduce((x,q)=>x+q.ad,0)||1,myAd=pl.filter(q=>q.id===0).reduce((x,q)=>x+q.ad,0);
+      h+=`<div class="kpis"><div class="kpi"><b>${(sOn*100).toFixed(0)}%</b><span>广告预算投向线上的比例</span></div><div class="kpi"><b>${fmt(A.tot||0)}</b><span>线上广告日成交额</span></div><div class="kpi"><b>${(A.px||1).toFixed(2)}</b><span>广告价格指数（宏观景气 × 广告主需求）</span></div><div class="kpi"><b>${(myAd/tot*100).toFixed(1)}%</b><span>我的平台广告份额</span></div></div>
+      <div class="mu" style="font-size:12px;margin:6px 0">各公司在「市场」设的商品广告，${(sOn*100).toFixed(0)}% 投到线上平台（随互联网普及上升），其余投传统媒体。平台广告收入来自外部品牌广告主 + 游戏里各公司的广告预算。<b>被平台拒绝的广告主，只能转投效率更低的渠道，品牌增长变慢。</b></div>
+      <h4>🏆 平台广告收入排行（今日）</h4><table><tr><th>平台</th><th>公司</th><th>日广告收入</th><th>份额</th><th>日其他收入</th><th>广告准入</th><th>灰色广告</th></tr>${pl.slice(0,12).map(q=>{const c=G.cos[q.id],p=adpOf(c,q.k);return`<tr${q.id===0?' style="background:rgba(56,189,248,.08)"':''}><td>${NET[q.k].ic} ${NET[q.k].n}</td><td>${nameOf(q.id)}</td><td>${fmt(q.ad)}</td><td>${(q.ad/tot*100).toFixed(1)}%</td><td>${fmt(q.oth)}</td><td>${AD_BAN[p.ban][0]}${p.ban&&q.id!==0&&!adAccepts(c,q.k,0)?' <span class="neg">⛔拒你</span>':''}</td><td>${p.gray?'⚠️ 接':'-'}</td></tr>`}).join('')||'<tr><td colspan="7" class="mu">还没有平台上线</td></tr>'}</table>`;
+      const src={};let srcT=0;for(const k in lm.byk||{}){const bk=lm.byk[k];for(const n in bk.ext){src['e:'+n]=(src['e:'+n]||0)+bk.ext[n];srcT+=bk.ext[n]}for(const id in bk.co){src['c:'+id]=(src['c:'+id]||0)+bk.co[id];srcT+=bk.co[id]}if(bk.gray){src['g']=(src['g']||0)+bk.gray;srcT+=bk.gray}}
+      const rows=Object.entries(src).sort((a,b)=>b[1]-a[1]).slice(0,14);
+      h+=`<h4 style="margin-top:12px">📒 谁在我的平台投广告（${live?'本月至今':'上月'}）</h4>${rows.length?`<table><tr><th>广告主</th><th>类型</th><th>金额</th><th>占比</th></tr>${rows.map(([k,v])=>{let n,tp;if(k==='g'){n='🧪 P2P 理财 / 神奇保健品';tp='<span class="neg">灰色广告</span>'}else if(k[0]==='e'){const e=EXT_ADV.find(x=>x[0]===k.slice(2));n=e[1]+' '+e[0]+'品牌';tp='外部广告主'}else{n=nameOf(+k.slice(2));tp=atWar(0,+k.slice(2))?'<span class="neg">商战对手</span>':'游戏内公司'}return`<tr><td>${n}</td><td>${tp}</td><td>${fmt(v)}</td><td>${(v/srcT*100).toFixed(1)}%</td></tr>`}).join('')}</table>`:'<div class="mu">你还没有上线的互联网平台。</div>'}`;
+      const out=Object.entries(lm.out||{}).sort((a,b)=>b[1]-a[1]),outT=out.reduce((x,o)=>x+o[1],0)+(lm.rej||0)+(lm.trad||0)+(lm.self||0);
+      h+=`<h4 style="margin-top:12px">📤 我的商品广告投到哪了（${live?'本月至今':'上月'}）</h4>${outT>0?`<div class="mu" style="font-size:12px">当前广告效率 <b>${((me._adEff??1)*100).toFixed(0)}%</b>（全部平台都接受时最高 ${(((1-sOn)+sOn*1.2)*100).toFixed(0)}%）</div><table><tr><th>去向</th><th>金额</th><th>占比</th></tr>${out.map(([id,v])=>`<tr><td>线上 · ${nameOf(+id)} 的平台</td><td>${fmt(v)}</td><td>${(v/outT*100).toFixed(1)}%</td></tr>`).join('')}${lm.self?`<tr><td>线上 · 自家平台（内部结算，免费）</td><td>${fmt(lm.self)}</td><td>${(lm.self/outT*100).toFixed(1)}%</td></tr>`:''}<tr><td>传统媒体（电视/报纸/户外）</td><td>${fmt(lm.trad||0)}</td><td>${((lm.trad||0)/outT*100).toFixed(1)}%</td></tr>${lm.rej?`<tr><td class="neg">⛔ 被所有平台拒绝，转投传统媒体</td><td>${fmt(lm.rej)}</td><td>${(lm.rej/outT*100).toFixed(1)}%</td></tr>`:''}</table>`:'<div class="mu">你还没有投放商品广告（在「🛒 市场」里设置）。</div>'}`}
+    else{const ks=NK.filter(k=>me.tech[k]>=1);
+      h+=`<div class="mu" style="font-size:12px;margin-bottom:8px">每个平台可以单独决定接谁的广告、接不接灰色广告、是否让自家商品优先展示。你自己的商品广告投在自家平台属于集团内部结算，不花钱。</div>`;
+      if(!ks.length)h+='<div class="mu">你还没有上线的互联网产品：先建「互联网公司」研发到 Lv1。</div>';
+      for(const k of ks){const p=adpOf(me,k),U=G.netU[k]||0,sh=U?me.users[k]/U:0,bk=(lm.byk||{})[k]||{ad:0,oth:0,co:{}},blocked=G.cos.filter(c=>c.ai&&!c.dead&&!adAccepts(me,k,c.id));
+        h+=`<div class="card" style="margin-bottom:10px"><div class="row"><b>${NET[k].ic} ${NET[k].n}</b><span class="mu">用户 ${fnum(me.users[k])} · 份额 ${(sh*100).toFixed(1)}% · ${live?'本月':'上月'}广告 ${fmt(bk.ad)} · ${NETX[k].o} ${fmt(bk.oth)}</span></div>
+        <div class="mu" style="font-size:12px;margin:4px 0">收入构成：广告约 ${Math.round(NETX[k].ad*100)}%，${NETX[k].o}约 ${Math.round((1-NETX[k].ad)*100)}%。数据中心技术越高，广告投放越精准，广告位越值钱（当前 +${(2.5*Math.min(me.tech[k],20)).toFixed(0)}%）。</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:6px">
+        <label>广告位密度 <select onchange="G.cos[0].monet['${k}']=+this.value;openWin('net')">${[[0.6,'低 · 用户体验好'],[1,'中'],[1.6,'高 · 收入高但流失快']].map(([v,l])=>`<option value="${v}" ${Math.abs(me.monet[k]-v)<0.05?'selected':''}>${l}</option>`).join('')}</select></label>
+        <label>广告主准入 <select onchange="adpOf(G.cos[0],'${k}').ban=+this.value;openWin('net')">${AD_BAN.map((b,i)=>`<option value="${i}" ${p.ban===i?'selected':''}>${b[0]}</option>`).join('')}</select></label>
+        ${k==='ecom'?`<label>商家佣金率 <select onchange="adpOf(G.cos[0],'ecom').take=+this.value;openWin('net')">${[0.02,0.03,0.05,0.08,0.1].map(v=>`<option value="${v}" ${Math.abs(p.take-v)<0.001?'selected':''}>${v*100}%${v<0.05?' · 吸引商家':v>0.05?' · 赚得多但商家流失':''}</option>`).join('')}</select></label>`:''}
+        <label style="grid-column:1/-1"><input type="checkbox" ${p.self?'checked':''} onchange="adpOf(G.cos[0],'${k}').self=this.checked?1:0"> 自家商品优先展示：你在自家平台的商品广告效果翻倍（份额 >55% 有反垄断风险）</label>
+        <label style="grid-column:1/-1"><input type="checkbox" ${p.gray?'checked':''} onchange="adpOf(G.cos[0],'${k}').gray=this.checked?1:0;openWin('net')"> <span class="${p.gray?'neg':''}">接灰色广告（P2P/保健品）：广告收入 +35%，用户口碑下降，每月约 6% 概率被曝光</span></label></div>
+        <div class="mu" style="font-size:12px;margin-top:6px">${AD_BAN[p.ban][1]}。${blocked.length?`当前被拒：${blocked.map(c=>`<span style="color:${c.col}">${c.name}</span>`).join('、')}`:'当前没有公司被拒。'}${p.ban>=2&&sh>0.45?' <span class="neg">⚠️ 份额超过 45%，排斥同行可能被认定滥用市场支配地位。</span>':''}</div></div>`}}}
   else if(w==='finance'){t='💼 财务中心';const m=me.m,live={...m,label:'本月'};live.profit=m.rev+m.net+m.rent+m.dep+m.whole-m.purch-m.op-(m.sal||0)-(m.logi||0)-m.ad-m.int;live.cashEnd=me.cash;live.fin=me.loan-(m.loan0??me.loan);live.inv=(me.cash-(m.cash0??me.cash))-live.profit-live.fin;
     const hist=me.months,last12=hist.slice(-12),sum12={label:'近12月'};['rev','net','rent','whole','purch','op','sal','logi','ad','int','dep','tax','profit','fin','inv'].forEach(k=>sum12[k]=last12.reduce((s2,x)=>s2+(x[k]||0),0));
     const REV=r=>r.rev+r.net+r.rent+r.whole,GP=r=>REV(r)-r.purch,OPP=r=>GP(r)-r.op-(r.sal||0)-(r.logi||0)-r.ad,EBT=r=>OPP(r)-r.int+r.dep,PROF=r=>r.profit??(EBT(r)-(r.tax||0));
@@ -1402,7 +1500,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
     if(finTab==='is'){finPer=finPer||'m';let cols;if(finPer==='m')cols=[...hist.slice(-5),live,sum12];else{const all=[...hist,live],mp=new Map();for(const x of all){const yy=mYear(x)||new Date(G.date).getUTCFullYear(),mm=x===live?new Date(G.date).getUTCMonth()+1:mMon(x),k=finPer==='q'?`${yy}Q${Math.ceil(mm/3)}`:`${yy}年`;if(!mp.has(k))mp.set(k,[]);mp.get(k).push(x)}
         cols=[...mp.entries()].slice(-6).map(([k,arr])=>Object.assign(sumM(arr),{label:k+(arr.includes(live)?'（进行中）':'')}))}
       h+=`<div class="tabs">${[['m','月度'],['q','季度'],['y','年度']].map(([k,v])=>`<button class="${finPer===k?'on':''}" onclick="finPer='${k}';openWin('finance')">${v}</button>`).join('')}</div>`;
-      const rows=[['一、营业收入',REV,0,1],['　零售收入',r=>r.rev],['　互联网收入',r=>r.net],['　租金收入',r=>r.rent],['　批发及其他收入',r=>r.whole],['二、营业成本（外购商品/原料）',r=>r.purch,1],['三、毛利',GP,0,1],['四、期间费用'],['　运营费用（门店/工厂/研发/员工工资）',r=>r.op,1],['　物流费用（运输/配送）',r=>r.logi||0,1],['　管理费用（高管薪酬）',r=>r.sal||0,1],['　销售费用（广告）',r=>r.ad,1],['五、营业利润',OPP,0,1],['　财务费用（贷款利息）',r=>r.int,1],['　财务收入（存款利息）',r=>r.dep],['六、利润总额',EBT,0,1],['　所得税',r=>r.tax||0,1],['七、净利润',PROF,0,1]];
+      const rows=[['一、营业收入',REV,0,1],['　零售收入',r=>r.rev],['　互联网收入',r=>r.net],['　　其中：广告收入',r=>r.netAd||0],['　　其中：佣金/会员/打赏',r=>(r.net||0)-(r.netAd||0)],['　租金收入',r=>r.rent],['　批发及其他收入',r=>r.whole],['二、营业成本（外购商品/原料）',r=>r.purch,1],['三、毛利',GP,0,1],['四、期间费用'],['　运营费用（门店/工厂/研发/员工工资）',r=>r.op,1],['　物流费用（运输/配送）',r=>r.logi||0,1],['　管理费用（高管薪酬）',r=>r.sal||0,1],['　销售费用（广告）',r=>r.ad,1],['五、营业利润',OPP,0,1],['　财务费用（贷款利息）',r=>r.int,1],['　财务收入（存款利息）',r=>r.dep],['六、利润总额',EBT,0,1],['　所得税',r=>r.tax||0,1],['七、净利润',PROF,0,1]];
       h+=`<table><tr><th>利润表（合并）</th>${cols.map(c2=>`<th>${c2.label}</th>`).join('')}</tr>${rows.map(([nm2,f2,neg,bold])=>f2?`<tr${bold?' style="background:rgba(56,189,248,.06)"':''}><td>${bold?'<b>'+nm2+'</b>':nm2}</td>${cols.map(c2=>cell(f2(c2),neg,bold)).join('')}</tr>`:`<tr><td class="mu">${nm2}</td>${cols.map(()=>'<td></td>').join('')}</tr>`).join('')}
       ${(()=>{const subs3=G.cos.filter(c2=>!c2.dead&&c2.ai&&stake(0,c2.id)>=0.51);if(!subs3.length)return'';return`<tr><td class="mu">八、控股子公司净利润（并表·归属本公司）</td>${cols.map(c2=>{const v=subs3.reduce((x,o)=>{const m2=o.months.find(mm=>mm.label===c2.label);return x+(m2?m2.profit*stake(0,o.id):0)},0);return cell(v)}).join('')}</tr>`})()}
       <tr><td class="mu">毛利率</td>${cols.map(c2=>`<td class="mu">${REV(c2)?(GP(c2)/REV(c2)*100).toFixed(1)+'%':'-'}</td>`).join('')}</tr><tr><td class="mu">净利率</td>${cols.map(c2=>`<td class="mu">${REV(c2)?(PROF(c2)/REV(c2)*100).toFixed(1)+'%':'-'}</td>`).join('')}</tr></table>
@@ -1582,7 +1680,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
     <b>人才</b>：「👔 人才」里可以聘请 6 类高管（零售/营销/技术/运营/财务/地产总监），他们提供加成并可自动定价、自动研发、自动选产品、自动还贷、自动调租；还可以设置全员薪资政策。<br>
     <b>拆迁</b>：点击地图上的居民楼可以支付补偿费拆迁；建造时直接选在居民楼上也会自动拆迁（橙色框）。拆迁会减少城市住房容量。<br>
     <b>经济规律</b>：原料和中间品的批发价由全国产量与需求决定；城市人口受住房容量限制，地产商盖楼会让城市扩张；地价看区位和周边开发密度；门店客流看周边居民密度（右下角「热力图」可查看）。<br>
-    <b>5. 互联网</b>：开局即可进入，建互联网公司 + 数据中心；各赛道在各自的风口年进入爆发期，此前市场较小。<br>
+    <b>5. 互联网</b>：开局即可进入，建互联网公司 + 数据中心；各赛道在各自的风口年进入爆发期，此前市场较小。收入分广告和其他渠道（电商佣金、社交游戏会员、短视频打赏等）。广告主包括外部品牌和游戏里各公司的商品广告预算；你可以决定接不接对手的广告、接不接灰色广告、电商佣金率多少（「互联网 → 平台策略」）。被大平台拒绝投放的公司，广告效率会变低。<br>
     <b>6. 对手</b>：15 位虚构创业者各有开局资产和扩张偏好：实业家先建工厂、地产商先囤地、互联网派先做网站……<br>
     <b>7. 股市</b>：买卖任意对手股票，持股 51% 可收购。<br><b>8. 卡顿？</b>点 ⚙️ 切到「流畅」。</div>`}
   $('#mt').textContent=t;$('#mb').innerHTML=h;renderNav(w);if(refresh)$('#mb').scrollTop=st}
@@ -1629,7 +1727,7 @@ window.takeover=id=>{const me=G.cos[0],c=G.cos[id];for(const b of G.b)if(b.o===i
   c.dead=true;delete G.hold[id];delete G.cost[id];me.acquired++;addNews(`🤝 ${me.name}完成对${c.name}的收购，${c.founder}黯然离场`);toast(`🎉 成功收购 ${c.name}！`);openWin('stock',true)};
 
 /* ================= 存档 / 启动 ================= */
-const SKEY='capital-empire-lab-v13';const SKIP=new Set(['style','dens','resd']);
+const SKEY='capital-empire-lab-v13';const SKIP=new Set(['style','dens','resd','_ps','_psd','plats']);
 const NSLOT=8;
 const ser=()=>JSON.stringify(G,(k,v)=>SKIP.has(k)?undefined:v);
 function gameDateStr(){const d=new Date(G.date);return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`}

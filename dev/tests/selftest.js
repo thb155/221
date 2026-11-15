@@ -78,6 +78,18 @@
     T('暂停时花钱，顶栏现金立即刷新', () => { fresh(); boot(); setSpeed(0); const me=G.cos[0]; me.cash-=123456; lastUI=0; loop(performance.now()+5000); return $('#s-cash').textContent===fmt(me.cash) || $('#s-cash').textContent+' vs '+fmt(me.cash); });
     T('财报弹出时自动暂停，关闭后恢复', () => { fresh(); boot(); closeModal(); setSpeed(2); G.autoReport=true; let k=0; while(G.reports==null||!G.reports.length){simDay();if(++k>200)break} const paused=speed===0&&curWin==='report'; closeModal(); return (paused && speed===2) || `paused=${paused} speed=${speed} win=${curWin}`; });
     T('新手教程可以关闭和重新打开', () => { fresh(); boot(); setTut(0); const hid=$('#goal').classList.contains('hidden'); setSpeed(0); setTab='game'; openWin('settings'); const box=[...document.querySelectorAll('#mb input[type=checkbox]')].find(x=>/教程/.test(x.parentElement.textContent)); setTut(1); closeModal(); const back=!$('#goal').classList.contains('hidden')&&!!$('#goal .gx'); return (hid&&box&&!box.checked&&back) || `hid=${hid} box=${!!box} back=${back}`; });
+    T('广告市场：平台收入来自外部品牌和游戏内公司', () => { fresh({pkg:'retail'}); const me=G.cos[0]; me.cash+=1e8; G.day+=365*12; G.date+=365*12*864e5;
+      const city=G.cities[G.cur]; for(const t of ['net','dc','dc']){const l=findLot(city,false);const b=placeBuilding(me,t,G.cur,l.x,l.y,true);if(t==='net')setupB(me,b,'search')} me.tech.search=8;
+      for(const c of G.cos)if(c.ai)for(const p of FINAL)c.ad[p]=3000; run(60);
+      const bk=me.adm&&me.adm.byk.search||me.adl&&me.adl.byk.search; const coIn=bk?Object.keys(bk.co).length:0;
+      return (bk && bk.ad>0 && coIn>0 && Object.values(bk.ext).some(v=>v>0) && finite(me.m.netAd) && me.m.net>=me.m.netAd) || `bk=${!!bk} co=${coIn} netAd=${me.m.netAd}`; });
+    T('平台拒绝商战对手后，对手广告效率下降', () => { const me=G.cos[0], r=G.cos.find(c=>c.ai&&!c.dead); adpOf(me,'search').ban=0; for(const c of G.cos)if(c.ai&&c.id!==r.id)for(const k of NK)c.tech[k]=0; run(2); const e0=r._adEff;
+      G.wars=G.wars||[]; G.wars.push({a:0,b:r.id,w:1,d0:G.day}); buildWar(); adpOf(me,'search').ban=1; run(2); const e1=r._adEff; G.wars.pop(); buildWar();
+      return (e1<e0) || `e0=${e0} e1=${e1}`; });
+    T('电商佣金率影响收入，灰色广告提高广告收入', () => { const me=G.cos[0]; me.tech.ecom=5; me.users.ecom=2e5; const p=adpOf(me,'ecom'); p.take=0.05; me.adm=null; run(1); const a=me.adm.byk.ecom.oth; p.take=0.1; me.adm=null; run(1); const b=me.adm.byk.ecom.oth;
+      const q=adpOf(me,'search'); q.gray=0; me.adm=null; run(1); const g0=me.adm.byk.search.ad; q.gray=1; me.adm=null; run(1); const g1=me.adm.byk.search.ad; q.gray=0;
+      return (b>a*1.6 && g1>g0*1.15) || `佣金 ${a}→${b} 灰色 ${g0}→${g1}`; });
+    T('互联网窗口三个页签都能打开', () => { boot(); for(const t of ['ov','ad','pol']){ netTab=t; openWin('net'); if(!$('#mb').innerHTML.length) return t; } netTab='ov'; closeModal(); return true; });
     T('所有窗口都能打开', () => {
       fresh(); run(400);
       const ws = ['market', 're', 'net', 'finance', 'research', 'stock', 'rank', 'macro', 'hr', 'war', 'inbox', 'report', 'dash', 'settings', 'help'];

@@ -85,14 +85,15 @@ function simDay(){
   G.adopt=clamp(0.04+0.96*Math.pow(clamp((yr-1990)/25,0,1),1.5)+MM.adopt,0.02,1);
   for(const k of NK){const U=totPop*NET[k].pen*G.adopt*netStage(k,yr);G.netU[k]=U;
     const list=alive.filter(c=>c.tech[k]>=1);let sum=0;const A={};
-    for(const c of list){A[c.id]=Math.pow(techQ(c.tech[k])/50,2)*(1+c.brand[k]/40)*Math.pow(c.monet[k],-0.8)*(1+0.15*Math.log10(1+c.users[k]));sum+=A[c.id]}
+    for(const c of list){A[c.id]=Math.pow(techQ(c.tech[k])/50,2)*(1+c.brand[k]/40)*Math.pow(c.monet[k],-0.8)*netAttr(c,k)*(1+0.15*Math.log10(1+c.users[k]));sum+=A[c.id]}
     const totU=list.reduce((x,c)=>x+c.users[k],0),sat=U>0?Math.min(1,totU/U):1,gr=0.03*(1-0.7*sat*sat);G.netSat=G.netSat||{};G.netSat[k]=sat;
     for(const c of list){const target=U*A[c.id]/(0.4+sum),room=capOf(c)-usersOf(c)+c.users[k],dlt=target-c.users[k];
       c.users[k]=clamp(c.users[k]+dlt*(dlt>0?gr:0.03),0,Math.max(0,Math.min(room,U)));if(G.anti&&G.anti[c.id+'_'+k]>G.day)c.monet[k]=Math.min(c.monet[k],1);
-      const r=c.users[k]*NET[k].arpu*c.monet[k];c.cash+=r;c.m.net+=r;if(c.id===0&&r>0){const nb=G.b.filter(x=>x.o===0&&x.type==='net'&&x.prod===k);nb.forEach(x=>segAcc(x,'rev',r/nb.length))}if(U>0)c.brand[k]=Math.min(100,c.brand[k]+c.users[k]/U*0.08)}}
+      if(U>0)c.brand[k]=Math.min(100,c.brand[k]+c.users[k]/U*0.08)}}
+  netRevDay(alive);// 广告市场 + 佣金/会员等收入
   // 费用
   for(const c of alive){
-    for(const p of FINAL.concat(NK)){c.brand[p]*=0.996;if(c.ad[p]>0){const a=c.ad[p];c.cash-=a;c.m.ad+=a;c.brand[p]=Math.min(100,c.brand[p]+Math.sqrt(a)/90*(1+0.8*exS(c,'cmo')))}}
+    for(const p of FINAL.concat(NK)){c.brand[p]*=0.996;if(c.ad[p]>0){const a=c.ad[p];c.cash-=a;c.m.ad+=a;c.brand[p]=Math.min(100,c.brand[p]+Math.sqrt(a)/90*(1+0.8*exS(c,'cmo'))*(NET[p]?1:(c._adEff??1)))}}
     const srv=usersOf(c)*0.02;c.cash-=srv;c.m.op+=srv;if(c.id===0&&srv>0){const ds=G.b.filter(x=>x.o===0&&x.type==='dc');ds.forEach(x=>segAcc(x,'op',srv/ds.length))}
     for(let ci=0;ci<G.cities.length;ci++){const cap=capCity(c,ci);for(const p of PK){const cv=c.ci[ci][p];if(cv.q>cap){const ex=cv.q-cap,r=ex*G.imp[p]*0.8;cv.q=cap;c.inv[p].q=Math.max(0,c.inv[p].q-ex);c.cash+=r;c.m.whole+=r}}}
     if(c.loan>0){const i=c.loan*loanRate(c)/365;c.cash-=i;c.m.int+=i}if(c.cash>0){const dp=c.cash*depRate(c)/365;c.cash+=dp;c.m.dep+=dp}
@@ -112,7 +113,7 @@ function checkTech(c,p){while(c.rp[p]>=techNeed(c.tech[p])){c.rp[p]-=techNeed(c.
   if(c.id===0)toast(`🔬 ${ic(p)} ${nm(p)} 技术 Lv${c.tech[p]}${NET[p]&&c.tech[p]===1?'，产品正式上线！':''}`);
   else if(NET[p]&&c.tech[p]===1)addNews(`${c.av} ${c.founder}：${c.name}旗下「${NET[p].n}」正式上线`)}}
 const QN=['一季报','半年报','三季报','年报'];
-const sumM=(arr)=>{const o={rev:0,net:0,rent:0,whole:0,purch:0,op:0,sal:0,logi:0,ad:0,int:0,dep:0,tax:0,profit:0};for(const m of arr)for(const k in o)o[k]+=m[k]||0;return o};
+const sumM=(arr)=>{const o={rev:0,net:0,netAd:0,rent:0,whole:0,purch:0,op:0,sal:0,logi:0,ad:0,int:0,dep:0,tax:0,profit:0};for(const m of arr)for(const k in o)o[k]+=m[k]||0;return o};
 const mYear=m=>+String(m.label).split('.')[0],mMon=m=>+String(m.label).split('.')[1];
 function buildReport(d){const me=G.cos[0],m=me.months[me.months.length-1];if(!m)return;const mo=d.getUTCMonth(),y=d.getUTCFullYear();
   notify('report',`${m.label} 经营简讯`,`当月净利润 ${fmt(m.profit)}`,false);
@@ -145,7 +146,7 @@ let repSel=0;
 const REVof=r=>r.rev+r.net+r.rent+r.whole;
 function monthEnd(d){
   scnCheck();renderGoal();
-  macroMonth();genMonth(d);hrMonth(G.cos[0]);warMonth();entrantMonth();
+  macroMonth();genMonth(d);hrMonth(G.cos[0]);warMonth();entrantMonth();netAdMonth();
   // 楼市周期
   for(const city of G.cities){let ev='';
     if(rnd()<0.05){city.trend+=0.02;ev=`🔥 ${city.n}楼市火爆，地价快速上涨`}else if(rnd()<0.04){city.trend-=0.028;ev=`🧊 ${city.n}出台楼市调控，地价承压`}
