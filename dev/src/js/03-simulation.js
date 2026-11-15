@@ -48,9 +48,9 @@ function simDay(){
     const c=G.cos[b.o];const op=opCost(b)*wageOp(c)*(1-0.15*exS(c,'coo'))*scaleF(c);c.cash-=op;c.m.op+=op;segAcc(b,'op',op);b.out=0;
     if(isRetail(b)||b.type==='dc'||b.type==='land')continue;
     if(isRent(b)){const s=reS[b.c],f=b.type==='apt'?s.fa:s.fo,ref=refRent(b);const tg=clamp(0.97*Math.pow(ref/Math.max(1,b.rent),1.6)*f,0,1);b.occ+=(tg-b.occ)*0.03;
-      const r=units(b)*b.occ*b.rent*(c.perk==='re'?1.15:1)*(1+0.1*exS(c,'cre'));c.cash+=r;c.m.rent+=r;segAcc(b,'rev',r);b.out=r;b.hist.push(r);if(b.hist.length>60)b.hist.shift();continue}
+      const r=units(b)*b.occ*b.rent*(c.perk==='re'?1.06:1)*(1+0.1*exS(c,'cre'));c.cash+=r;c.m.rent+=r;segAcc(b,'rev',r);b.out=r;b.hist.push(r);if(b.hist.length>60)b.hist.shift();continue}
     if(!b.prod){b.hist.push(0);if(b.hist.length>60)b.hist.shift();continue}
-    const pk=c.perk==='ind'?1.2:1;
+    const pk=c.perk==='ind'?1.06:1;
     if(b.type==='farm'||b.type==='forest'||b.type==='mine'){const q=P[b.prod].rate*lvMul(b.lv)*pk*effOf(c)*(1+0.1*exS(c,'coo'))*(0.9+rnd()*0.2);addInv(c,b.prod,q,techQ(c.tech[b.prod]),b.c);segAcc(b,'rev',q*G.imp[b.prod]);b.out=q;G.fl[b.prod].s+=q}
     else if(b.type==='factory'){const pp=P[b.prod];
       if(!(pp.tech&&c.tech[b.prod]<pp.tech)){const n=pp.rate*lvMul(b.lv)*pk*effOf(c)*(1+0.1*exS(c,'coo'));let ratio=1;
@@ -58,7 +58,7 @@ function simDay(){
         const made=n*Math.max(0,ratio);
         if(made>0){let qs=0,qw=0;for(const k in pp.inp){const r=take(c,k,pp.inp[k]*made,b);segAcc(b,'cogs',pp.inp[k]*made*G.imp[k]);qs+=r.ql*pp.inp[k];qw+=pp.inp[k];G.fl[k].d+=pp.inp[k]*made}segAcc(b,'rev',made*G.imp[b.prod]);addInv(c,b.prod,made,0.5*(qs/qw)+0.5*techQ(c.tech[b.prod]),b.c);b.out=made;G.fl[b.prod].s+=made}
         if(b.out>0&&Q===2&&b.c===G.cur&&rnd()<0.5)smoke.push(mkSmoke(b))}}
-    else if(b.type==='lab'||b.type==='net'){const pts=lvMul(b.lv)*(c.perk==='tech'?1.4:1)*MM.rd*effOf(c)*(1+0.6*exS(c,'cto'));c.rp[b.prod]+=pts;b.out=pts;checkTech(c,b.prod)}
+    else if(b.type==='lab'||b.type==='net'){const pts=lvMul(b.lv)*(c.perk==='tech'?1.12:1)*MM.rd*effOf(c)*(1+0.6*exS(c,'cto'));c.rp[b.prod]+=pts;b.out=pts;checkTech(c,b.prod)}
     b.hist.push(b.out);if(b.hist.length>60)b.hist.shift();
   }
   // 零售
@@ -67,7 +67,7 @@ function simDay(){
     for(const p of FINAL){const rf=refNow(p),ap=city.avgP[p]||rf;const D=P[p].dem*city.pop/50000*city.dmul[p]*clamp(rf/ap,0.5,1.6)*MM.dem*(MM.demP[p]||1);const list=[];
       for(const b of G.b){if(b.c!==city.id||!isRetail(b))continue;for(const s of b.slots){if(s.p!==p)continue;const c=G.cos[b.o];const v=c.inv[p];
         if(!(v.q>1||(c.autoImport&&c.cash>0))){s.sold=0;s.share=0;continue}const q=v.q>=40?v.ql:G.qm;
-        const base=traffic(city,b.x,b.y)*(c.perk==='sales'?1.15:1)*(1+0.08*exS(c,'retail'))*(0.85+0.15*b.lv)*(b.type==='market'?1.25:b.type==='mini'?0.8:1),qn=q*50/qrefOf(p),pr=rf/Math.max(1,s.price);
+        const base=traffic(city,b.x,b.y)*(c.perk==='sales'?1.06:1)*(1+0.08*exS(c,'retail'))*(0.85+0.15*b.lv)*(b.type==='market'?1.25:b.type==='mini'?0.8:1),qn=q*50/qrefOf(p),pr=rf/Math.max(1,s.price);
         const As=SEG.map(g=>base*Math.pow(qn/50,g.q)*Math.pow(1+c.brand[p]/g.b,g.bp)*Math.pow(pr,g.pe));list.push({b,s,c,As,q})}}
       if(WH.size){const sl=new Set(list.map(o=>o.c.id));for(const o of list)for(const x of sl){const h=warH(x,o.c.id);if(h)o.As=o.As.map(a=>a*(1-0.06*h))}}
       const mix=segMix(city),S=[0,0,0];list.forEach(o=>o.As.forEach((a,k)=>S[k]+=a));let pw=0,tot=0;
@@ -82,8 +82,8 @@ function simDay(){
   for(const b of G.b)if(isRetail(b)){const r=storeRev[b.id]||0;b.out=r;b.hist.push(r);if(b.hist.length>60)b.hist.shift();if(r>0&&b.o===0&&b.c===G.cur&&Q>0&&rnd()<0.3&&sfx('coin')!==1)floats.push({x:b.x+1,y:b.y+1,t:'+'+fmt(r),life:1})}
   // 互联网
   const yr=yearNow(),totPop=G.cities.reduce((s,c)=>s+c.pop*((CITY_DEF[c.id]||{}).net||1),0);
-  G.adopt=yr<1993?0:clamp(Math.pow(clamp((yr-1993)/22,0,1),1.4)+MM.adopt,0,1);
-  for(const k of NK){const U=yr>=NET[k].year?totPop*NET[k].pen*G.adopt:0;G.netU[k]=U;
+  G.adopt=clamp(0.04+0.96*Math.pow(clamp((yr-1990)/25,0,1),1.5)+MM.adopt,0.02,1);
+  for(const k of NK){const U=totPop*NET[k].pen*G.adopt*netStage(k,yr);G.netU[k]=U;
     const list=alive.filter(c=>c.tech[k]>=1);let sum=0;const A={};
     for(const c of list){A[c.id]=Math.pow(techQ(c.tech[k])/50,2)*(1+c.brand[k]/40)*Math.pow(c.monet[k],-0.8)*(1+0.15*Math.log10(1+c.users[k]));sum+=A[c.id]}
     const totU=list.reduce((x,c)=>x+c.users[k],0),sat=U>0?Math.min(1,totU/U):1,gr=0.03*(1-0.7*sat*sat);G.netSat=G.netSat||{};G.netSat[k]=sat;
@@ -105,7 +105,7 @@ function simDay(){
   if(G.day%7===0){for(const c of alive)if(c.ai)aiPrice(c);for(const c of alive){(c.ph=c.ph||[]).push(+sharePrice(c).toFixed(2));if(c.ph.length>260)c.ph.shift()}}
   for(const c of alive)c.sent=clamp(c.sent*(1+(rnd()-0.5)*0.03)+(MM.sent-c.sent)*0.02,0.3,1.8);
   if(d1.getUTCMonth()!==d0.getUTCMonth())monthEnd(d0);
-  for(const k of NK)if(d0.getUTCFullYear()<NET[k].year&&d1.getUTCFullYear()>=NET[k].year){addNews(`🌐 互联网新风口：「${NET[k].n}」时代来临！`);toast(`🌐 新产业解锁：${NET[k].ic} ${NET[k].n}`)}
+  for(const k of NK)if(d0.getUTCFullYear()<NET[k].year&&d1.getUTCFullYear()>=NET[k].year){addNews(`🌐 互联网新风口：「${NET[k].n}」进入爆发期，用户需求全面成熟！`);toast(`🌐 风口来临：${NET[k].ic} ${NET[k].n} 市场进入爆发期`)}
   checkGoal();
 }
 function checkTech(c,p){while(c.rp[p]>=techNeed(c.tech[p])){c.rp[p]-=techNeed(c.tech[p]);c.tech[p]++;
@@ -139,13 +139,13 @@ function buildReport(d){const me=G.cos[0],m=me.months[me.months.length-1];if(!m)
     loss:loss.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),win:win.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),subs,chg,hr:G.mlogHR||[],wars,noco:[...new Set(noco)],macro,pend:(G.pend||[]).length,tips:tips.slice(0,8)};
   G.mlogHR=[];G.report=R;G.reports=G.reports||[];G.reports.unshift(R);if(G.reports.length>24)G.reports.length=24;repSel=0;
   notify('report',`📑 ${R.label}发布`,`本期累计净利润 ${fmt(cum.profit)}${hasLY?`，同比 ${pctS(cum.profit,cumLY.profit)}`:''}${loss.length?`，${loss.length} 处亏损`:''}`,true);
-  if(G.autoReport!==false&&!curWin){openWin('report')}}
+  if(G.autoReport!==false&&curWin!=='scn'){if(G.rpPause!==false&&speed){rpResume=speed;setSpeed(0);acc=0}openWin('report')}}
 const pctS=(a,b)=>{if(b==null||!isFinite(b)||Math.abs(b)<1)return'—';const r=(a-b)/Math.abs(b)*100;return(r>=0?'+':'')+r.toFixed(1)+'%'};
 let repSel=0;
 const REVof=r=>r.rev+r.net+r.rent+r.whole;
 function monthEnd(d){
   scnCheck();renderGoal();
-  macroMonth();genMonth(d);hrMonth(G.cos[0]);warMonth();
+  macroMonth();genMonth(d);hrMonth(G.cos[0]);warMonth();entrantMonth();
   // 楼市周期
   for(const city of G.cities){let ev='';
     if(rnd()<0.05){city.trend+=0.02;ev=`🔥 ${city.n}楼市火爆，地价快速上涨`}else if(rnd()<0.04){city.trend-=0.028;ev=`🧊 ${city.n}出台楼市调控，地价承压`}
@@ -166,7 +166,7 @@ function monthEnd(d){
     else if(r<0.8){const city=pick(G.cities);growCity(city,6);addNews(`🏙️ ${city.n}政府规划新城区，大批住房开工`)}
     else{const c=G.cos[1+Math.floor(rnd()*(G.cos.length-1))];if(c&&!c.dead)addNews(`${c.av} ${c.founder}（${c.name}）：「${c.style.quote}」`)}}
 }
-function loanCap(c){return Math.max(0,Math.round((netWorth(c)+c.loan)*(c.perk==='fin'?0.75:0.5)*(MM?MM.loan:1)/10000)*10000-c.loan)}
+function loanCap(c){return Math.max(0,Math.round((netWorth(c)+c.loan)*(c.perk==='fin'?0.575:0.5)*(MM?MM.loan:1)/10000)*10000-c.loan)}
 function invVal(c){let v=0;for(const p of PK)v+=c.inv[p].q*G.imp[p]*0.7;return v}
 function netVal(c){let v=0;for(const k of NK)v+=c.users[k]*NET[k].arpu*c.monet[k]*365*0.8;return v}
 const reVal=c=>G.b.reduce((s,b)=>s+(b.o===c.id&&isRE(b)?bval(b):0),0);

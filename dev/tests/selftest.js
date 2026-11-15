@@ -66,6 +66,17 @@
       const sumP=G.cos[0].months.filter(m=>mYear(m)===r.y).reduce((x,m)=>x+m.profit,0);return Math.abs(sumP-r.cum.profit)<1||`年报利润 ${r.cum.profit} ≠ 月度合计 ${sumP}`;
     });
     T('利润表月度/季度/年度切换', () => { for(const p of ['m','q','y']){finPer=p;finTab='is';openWin('finance')}finPer='m';closeModal();return true; });
+    T('互联网开局即可经营并获得用户', () => { fresh({pkg:'retail'}); const me=G.cos[0]; me.cash+=5e7;
+      const city=G.cities[G.cur]; const l1=findLot(city,false), b=placeBuilding(me,'net',G.cur,l1.x,l1.y,true); setupB(me,b,'portal'); me.tech.portal=1;
+      const l2=findLot(city,false); placeBuilding(me,'dc',G.cur,l2.x,l2.y,true); run(120);
+      return (yearNow()<1991 && me.users.portal>0 && G.netU.portal>0) || `年份 ${yearNow().toFixed(2)} 用户 ${me.users.portal} 上限 ${G.netU.portal}`; });
+    T('开局天赋已削弱（研发 ≤15%、客流 ≤8%）', () => { const m=/研发速度 \+(\d+)%/.exec(PERKS.tech.d), s=/客流 \+(\d+)%/.exec(PERKS.sales.d); return (+m[1]<=15 && +s[1]<=8) || PERKS.tech.d; });
+    T('新竞争对手会随时间进场', () => { fresh({picks:['spark','aurora']}); const n0=G.cos.length; G.entRate=30; run(365*3+30); const n1=G.cos.length;
+      const nw=G.cos.slice(n0); for(const c of nw){ if(!finite(c.cash)||!finite(netWorth(c))) return c.name+' NaN'; }
+      return (n1>n0 && nw.every(c=>c.entrant>0 && G.b.some(b=>b.o===c.id))) || `进场 ${n1-n0}`; });
+    T('对手全选时也能生成全新公司进场', () => { fresh({picks:AI_DEF.map(a=>a.k)}); run(30); const c=spawnEntrant(); run(60); return (c && !AI_DEF.some(a=>a.n===c.name) && /^#[0-9a-f]{6}$/.test(c.col)) || (c&&c.name+' '+c.col); });
+    T('暂停时花钱，顶栏现金立即刷新', () => { fresh(); boot(); setSpeed(0); const me=G.cos[0]; me.cash-=123456; lastUI=0; loop(performance.now()+5000); return $('#s-cash').textContent===fmt(me.cash) || $('#s-cash').textContent+' vs '+fmt(me.cash); });
+    T('财报弹出时自动暂停，关闭后恢复', () => { fresh(); boot(); closeModal(); setSpeed(2); G.autoReport=true; let k=0; while(G.reports==null||!G.reports.length){simDay();if(++k>200)break} const paused=speed===0&&curWin==='report'; closeModal(); return (paused && speed===2) || `paused=${paused} speed=${speed} win=${curWin}`; });
     T('所有窗口都能打开', () => {
       fresh(); run(400);
       const ws = ['market', 're', 'net', 'finance', 'research', 'stock', 'rank', 'macro', 'hr', 'war', 'inbox', 'report', 'dash', 'settings', 'help'];

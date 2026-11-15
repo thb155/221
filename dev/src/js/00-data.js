@@ -49,6 +49,7 @@ const NET={
  social:{n:'社交软件',ic:'💬',year:2004,arpu:0.25,pen:0.85},
  video:{n:'短视频',ic:'🎬',year:2012,arpu:0.35,pen:0.75},
 };
+const netStage=(k,yr)=>clamp(0.25+0.75*(yr-1990)/(NET[k].year-1990+3),0.25,1);
 const PK=Object.keys(P),NK=Object.keys(NET),ALLK=PK.concat(NK);
 const FINAL=PK.filter(k=>P[k].cat==='final'),MID=PK.filter(k=>P[k].cat==='mid'),RAW=PK.filter(k=>P[k].cat==='raw');
 const BASIC=['bread','cheese','drink','clothes','toys','furniture','chocolate'];
@@ -135,7 +136,7 @@ function macroMods(){const m={price:{},dem:1,demP:{},sent:1,re:0,loan:1,tax:0.15
     case 'taxcut':m.tax=0.10;break;case 'taxup':m.tax=0.20;break;
     case 'reban':m.re-=0.015;m.apt*=0.85;break}
   m.re+=(0.045-G.rate)*0.25;m.sent*=1+(0.045-G.rate)*3;return m}
-const loanRate=c=>Math.max(0.01,G.rate+0.02-(c.perk==='fin'?0.03:0)-0.015*exS(c,'cfo'));
+const loanRate=c=>Math.max(0.01,G.rate+0.02-(c.perk==='fin'?0.008:0)-0.015*exS(c,'cfo'));
 const depRate=c=>Math.max(0,G.rate-0.02+(c?0.005*exS(c,'cfo'):0));
 // ===== 员工 / 高管系统 =====
 const ROLES={
@@ -176,7 +177,7 @@ function autoMgr(c){const ex=c.ex||{},on=(r,k)=>ex[r]&&ex[r].auto&&ex[r].auto[k]
     for(const b of G.b){if(b.o!==c.id||b.prod)continue;
       if(b.type==='lab'){const cand=[...new Set([...mk,...sells])];const lock=PK.filter(p=>P[p].tech&&c.tech[p]<P[p].tech&&(sells.has(p)||mk.has(p)||rnd()<0.3));const pool=lock.length?lock:cand.length?cand:FINAL;
         b.prod=pool.sort((a,b2)=>c.tech[a]-c.tech[b2])[0];G.cities[b.c].dirty=true}
-      else if(b.type==='net'){const av=NK.filter(k=>yr>=NET[k].year-1&&!G.b.some(x=>x.o===c.id&&x.type==='net'&&x.prod===k));if(av.length){b.prod=av.sort((a,b2)=>NET[b2].arpu*NET[b2].pen-NET[a].arpu*NET[a].pen)[0];G.cities[b.c].dirty=true}}}}
+      else if(b.type==='net'){const av=NK.filter(k=>!G.b.some(x=>x.o===c.id&&x.type==='net'&&x.prod===k));if(av.length){b.prod=av.sort((a,b2)=>NET[b2].arpu*NET[b2].pen-NET[a].arpu*NET[a].pen)[0];G.cities[b.c].dirty=true}}}}
   if(on('coo','autoProd'))for(const b of G.b){if(b.o!==c.id||b.prod)continue;
     if(b.type==='factory'){const best=[...MID,...FINAL].filter(p=>!(P[p].tech&&c.tech[p]<P[p].tech)).map(p=>[p,(G.imp[p]-Object.keys(P[p].inp).reduce((s2,k)=>s2+P[p].inp[k]*G.imp[k],0))*P[p].rate]).sort((a,b2)=>b2[1]-a[1])[0];if(best){b.prod=best[0];b.hist=[];G.cities[b.c].dirty=true}}
     else if(b.type==='farm'||b.type==='forest'||b.type==='mine'){const best=RAW.filter(p=>P[p].src===b.type).sort((a,b2)=>G.imp[b2]*P[b2].rate-G.imp[a]*P[a].rate)[0];b.prod=best;b.hist=[];G.cities[b.c].dirty=true}}
@@ -219,7 +220,7 @@ function segMix(city){let m=(city.seg||[0.4,0.3,0.3]).slice();if(MM&&MM.dem<0.97
 const AIK=[{n:'简单',cash:0.7,exp:0.6,tech:0.6,price:1.06,smart:0},{n:'普通',cash:1,exp:1,tech:1,price:1,smart:0.5},{n:'困难',cash:1.5,exp:1.4,tech:1.5,price:0.97,smart:1}];
 const aik=()=>AIK[(G&&G.aiLv)??1];
 const scaleF=c=>{const n=c._nb||0;return 1+0.03*Math.max(0,n-10)/10*(1+Math.max(0,n-60)/60)};
-const PERKS={sales:{n:'营销天才',ic:'📣',d:'门店客流 +15%'},tech:{n:'技术极客',ic:'🧠',d:'研发速度 +40%'},fin:{n:'资本玩家',ic:'💹',d:'利率 3.5%，授信 +50%'},ind:{n:'实业家',ic:'🏗️',d:'工厂/原料产能 +20%'},re:{n:'地产嗅觉',ic:'🏘️',d:'租金收入 +15%'}};
+const PERKS={sales:{n:'营销天才',ic:'📣',d:'门店客流 +6%'},tech:{n:'技术极客',ic:'🧠',d:'研发速度 +12%'},fin:{n:'资本玩家',ic:'💹',d:'贷款利率 -0.8%，授信 +15%'},ind:{n:'实业家',ic:'🏗️',d:'工厂/原料产能 +6%'},re:{n:'地产嗅觉',ic:'🏘️',d:'租金收入 +6%'}};
 const PKGS={retail:{n:'零售起家',ic:'🏬',d:'市中心零售店 1 家',b:[['store']]},industry:{n:'实业起家',ic:'🏭',d:'牧场 + 奶酪工厂 + 便利店',b:[['farm','milk'],['factory','cheese'],['mini']]},tech:{n:'科技起家',ic:'🔬',d:'研发中心 + 互联网公司',b:[['lab','phone'],['net','portal']]},re:{n:'地产起家',ic:'🏠',d:'住宅楼 1 栋 + 土地 1 块',b:[['apt'],['land']]},cash:{n:'白手起家',ic:'💰',d:'额外现金 ¥80万',b:[]}};
 const PLAYER_COL='#22d3ee';
 const lvMul=lv=>1+0.6*(lv-1),opMul=lv=>1+0.4*(lv-1);

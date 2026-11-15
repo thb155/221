@@ -1,6 +1,7 @@
 /* ================= 窗口 ================= */
 let finPer='m',ibTab='all',setTab='save',curWin=null,reTab='overview',hrTab='team',hrRole=null,finTab='is',subSel=null;
-function closeModal(){$('#modal').classList.add('hidden');curWin=null}
+let rpResume=0;
+function closeModal(){$('#modal').classList.add('hidden');curWin=null;if(rpResume){if(!speed&&G&&!G.over)setSpeed(rpResume);rpResume=0}}
 $('#mx').onclick=closeModal;$('#modal').addEventListener('pointerdown',e=>{if(e.target.id==='modal')closeModal()});
 document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{if(MOBILE)document.body.classList.remove('showb');openWin(b.dataset.w)});
 const logoCh=c=>(c.logo||c.name.replace(/^[\s]+/,'')[0]||'?');
@@ -36,11 +37,11 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       for(const b of list)h+=`<tr><td>${BT[b.type].ic} ${BT[b.type].n} ★${b.lv}</td><td>${G.cities[b.c].n}</td><td>${isRent(b)?(b.occ*100).toFixed(0)+'%':'-'}</td><td>${isRent(b)?fmt(b.out):'-'}</td><td>${fmt(b.paid)}</td><td>${fmt(bval(b))}</td><td class="${bval(b)>=b.paid?'pos':'neg'}">${fmt(bval(b)-b.paid)}</td><td><button onclick="goTo(${b.id})">管理</button></td></tr>`;
       if(!list.length)h+='<tr><td colspan="8" class="mu">你还没有物业。左侧「🏠 地产」分组可以买地、盖住宅楼和写字楼。</td></tr>';h+='</table>'}}
   else if(w==='net'){t='🌐 互联网产业';const yr=yearNow();
-    h=`<div class="mu" style="margin-bottom:8px">互联网渗透率 ${(G.adopt*100).toFixed(1)}%（1993 年起逐年上升）。建「互联网公司」开发产品（Lv1 上线），建「数据中心」承载用户。商业化越高单用户收入越高，但用户越容易流失。</div>
+    h=`<div class="mu" style="margin-bottom:8px">互联网渗透率 ${(G.adopt*100).toFixed(1)}%（开局即可进入，逐年上升；各赛道到风口年进入爆发期）。建「互联网公司」开发产品（Lv1 上线），建「数据中心」承载用户。商业化越高单用户收入越高，但用户越容易流失。</div>
     <div class="row"><span>我的服务器：${fnum(usersOf(me))} / ${fnum(capOf(me))} 用户</span><span>本月互联网收入 ${fmt(me.m.net)}</span></div><div class="mu" style="font-size:12px;margin:4px 0">用户上限 = 六城总人口 ${fnum(G.cities.reduce((x,c)=>x+c.pop,0))} × 产品渗透率 × 互联网普及度。渗透越接近上限增长越慢（见顶）；单个产品份额超过 60% 可能被反垄断罚款。</div>
-    <table><tr><th>产品</th><th>开放</th><th>用户上限</th><th>已渗透</th><th>我的用户</th><th>份额</th><th>技术</th><th>商业化</th><th>广告/日</th><th>领先者</th></tr>`;
+    <table><tr><th>产品</th><th>市场成熟度</th><th>用户上限</th><th>已渗透</th><th>我的用户</th><th>份额</th><th>技术</th><th>商业化</th><th>广告/日</th><th>领先者</th></tr>`;
     for(const k of NK){const U=G.netU[k]||0;const lead=G.cos.filter(c=>!c.dead).sort((a,b)=>b.users[k]-a.users[k])[0];
-      h+=`<tr><td>${NET[k].ic} ${NET[k].n}</td><td>${yr>=NET[k].year?'✅':NET[k].year}</td><td>${fnum(U)}</td><td style="width:90px"><div class="bar"><i style="width:${((G.netSat||{})[k]||0)*100}%;background:${((G.netSat||{})[k]||0)>0.85?'#f43f5e':'#22c55e'}"></i></div></td><td>${fnum(me.users[k])}${G.anti&&G.anti[0+'_'+k]>G.day?' ⚖️':''}</td><td>${U?(me.users[k]/U*100).toFixed(1):'0'}%</td><td>Lv${me.tech[k]}</td>
+      h+=`<tr><td>${NET[k].ic} ${NET[k].n}</td><td>${yr>=NET[k].year?'🔥 爆发':Math.round(netStage(k,yr)*100)+'%·'+NET[k].year}</td><td>${fnum(U)}</td><td style="width:90px"><div class="bar"><i style="width:${((G.netSat||{})[k]||0)*100}%;background:${((G.netSat||{})[k]||0)>0.85?'#f43f5e':'#22c55e'}"></i></div></td><td>${fnum(me.users[k])}${G.anti&&G.anti[0+'_'+k]>G.day?' ⚖️':''}</td><td>${U?(me.users[k]/U*100).toFixed(1):'0'}%</td><td>Lv${me.tech[k]}</td>
       <td><select onchange="G.cos[0].monet['${k}']=+this.value">${[[0.6,'低'],[1,'中'],[1.6,'高']].map(([v,l])=>`<option value="${v}" ${Math.abs(me.monet[k]-v)<0.05?'selected':''}>${l}</option>`).join('')}</select></td>
       <td><input type="number" min="0" step="500" value="${me.ad[k]}" style="width:78px" onchange="G.cos[0].ad['${k}']=Math.max(0,+this.value||0)"></td><td>${lead&&lead.users[k]>0?`<span style="color:${lead.col}">${lead.name}</span> ${fnum(lead.users[k])}`:'-'}</td></tr>`}
     h+='</table>'}
@@ -140,7 +141,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
     else{const c=R.cum,qs=R.qs,REV=x=>x?x.rev+x.net+x.rent+x.whole:null,GP=x=>x?REV(x)-x.purch:null,OP=x=>x?GP(x)-x.op-(x.sal||0)-(x.logi||0)-x.ad:null,PF=x=>x?x.profit:null;
       const row=(n,f,bold)=>`<tr${bold?' style="background:rgba(56,189,248,.06)"':''}><td>${bold?'<b>'+n+'</b>':n}</td><td>${fmt(f(c))}</td><td class="mu">${R.cumLY?pctS(f(c),f(R.cumLY)):'—'}</td><td>${fmt(f(qs))}</td><td class="mu">${R.qp?pctS(f(qs),f(R.qp)):'—'}</td><td class="mu">${R.qLY?pctS(f(qs),f(R.qLY)):'—'}</td></tr>`;
       h=`<div class="row" style="flex-wrap:wrap;gap:8px"><select onchange="repSel=+this.value;openWin('report')" style="font-size:15px;font-weight:700">${RS.map((x,i)=>`<option value="${i}" ${x===R?'selected':''}>${x.label}</option>`).join('')}</select>
-      <label class="mu" style="font-size:12px"><input type="checkbox" ${G.autoReport!==false?'checked':''} onchange="G.autoReport=this.checked"> 每季发布时自动弹出</label></div>
+      <label class="mu" style="font-size:12px"><input type="checkbox" ${G.autoReport!==false?'checked':''} onchange="G.autoReport=this.checked"> 每季发布时自动弹出</label><label class="mu" style="font-size:12px;margin-left:8px"><input type="checkbox" ${G.rpPause!==false?'checked':''} onchange="G.rpPause=this.checked"> 弹出时暂停</label></div>
       <div class="kpis">${[['本期累计营收',fmt(REV(c)),R.cumLY?'同比 '+pctS(REV(c),REV(R.cumLY)):''],['本期累计净利润',fmt(c.profit),R.cumLY?'同比 '+pctS(c.profit,R.cumLY.profit):'',c.profit>=0?'pos':'neg'],['单季净利润',fmt(qs.profit),R.qp?'环比 '+pctS(qs.profit,R.qp.profit):'',qs.profit>=0?'pos':'neg'],['毛利率',REV(c)?(GP(c)/REV(c)*100).toFixed(1)+'%':'—','净利率 '+(REV(c)?(c.profit/REV(c)*100).toFixed(1)+'%':'—')],['每股收益',(c.profit/SHARES).toFixed(2),'股价 '+R.sp.toFixed(1)+'（本季 '+pctS(R.sp,R.sp0)+'）'],['净资产',fmt(R.nw),'资产负债率 '+(R.debt*100).toFixed(0)+'%']].map(([n,v,s2,cls])=>`<div class="kpi"><span>${n}</span><b class="${cls||''}">${v}</b><small>${s2}</small></div>`).join('')}</div>
       <div class="card"><h4>📑 主要财务数据</h4><table><tr><th>项目</th><th>本期累计（1–${R.q*3+3} 月）</th><th>同比</th><th>第 ${R.q+1} 季度</th><th>环比</th><th>同比</th></tr>
       ${row('营业收入',REV,1)}${row('　零售收入',x=>x.rev)}${row('　互联网收入',x=>x.net)}${row('　租金收入',x=>x.rent)}${row('营业成本',x=>x.purch)}${row('毛利',GP,1)}${row('期间费用',x=>x.op+(x.sal||0)+(x.logi||0)+x.ad)}${row('营业利润',OP,1)}${row('财务费用净额',x=>x.int-x.dep)}${row('所得税',x=>x.tax||0)}${row('净利润',PF,1)}</table></div>
@@ -203,7 +204,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       <div class="row"><input type="range" min="0" max="3" step="0.1" value="${v}" style="flex:1" oninput="G.mset.m['${d.k}']=+this.value;this.nextElementSibling.textContent=(+this.value===0?'关闭':'×'+(+this.value).toFixed(1))"><span style="width:40px;text-align:right">${v===0?'关闭':'×'+v.toFixed(1)}</span></div><div class="mu" style="font-size:11px">默认约每 ${(1/(d.p*12)).toFixed(0)} 年一次</div></div>`}).join('')}</div>
     <h4 style="margin-top:10px">📜 历史事件</h4><div class="mu" style="line-height:1.8;font-size:12px">${G.mlog.length?G.mlog.map(l=>{const dt=new Date(l.t);return`[${dt.getUTCFullYear()}/${dt.getUTCMonth()+1}] ${MDEF(l.k).ic} ${l.txt}`}).join('<br>'):'暂无'}</div>`}
   else if(w==='settings'){t='⚙️ 设置';
-    h=`<div class="tabs">${[['save','💾 存档 / 读档'],['gfx','🎨 画质'],['fx','🔊 音效与氛围']].map(([k,v])=>`<button class="${setTab===k?'on':''}" onclick="setTab='${k}';openWin('settings')">${v}</button>`).join('')}</div>`;
+    h=`<div class="tabs">${[['save','💾 存档 / 读档'],['game','🎮 游戏规则'],['gfx','🎨 画质'],['fx','🔊 音效与氛围']].map(([k,v])=>`<button class="${setTab===k?'on':''}" onclick="setTab='${k}';openWin('settings')">${v}</button>`).join('')}</div>`;
     if(setTab==='save'||!G){h+=`${G?`<div class="row" style="margin-bottom:8px"><span class="mu">当前：${G.cos[0].name} · ${gameDateStr()} · 净资产 ${fmt(netWorth(G.cos[0]))}</span><button class="pri" onclick="quickSave()">⚡ 快速存档</button></div>`:'<div class="mu" style="margin-bottom:8px">选择一个存档读取，或导入存档文件。</div>'}
       <div id="slots" class="mgrid"><div class="mu">读取存档列表中…</div></div>
       <h4 style="margin-top:14px">📤 导出 / 📥 导入（在电脑和手机之间转移存档）</h4>
@@ -211,6 +212,10 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label class="tag" style="padding:7px 12px;cursor:pointer;background:#253247;border:1px solid var(--bd);border-radius:8px">📁 选择存档文件<input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="importFile(this)"></label></div>
       <textarea id="impTxt" placeholder="或把存档代码粘贴到这里" style="width:100%;height:70px;margin-top:8px;font:12px monospace;color:var(--tx);background:#0f172a;border:1px solid var(--bd);border-radius:8px;padding:6px"></textarea>
       <button class="pri" style="margin-top:6px" onclick="importText()">📥 导入并读取</button></div>`;setTimeout(renderSlots,0)}
+    else if(setTab==='game'){const er=G.entrants===false?0:(G.entRate??1)>=1.8?2:1;
+      h+=`<h4>🆕 新竞争对手进场</h4><div class="mu" style="font-size:12px;margin-bottom:6px">开局之后，没被选中的对手和全新创业公司会陆续进入市场，带着行业平均七成的技术和随年份增长的资金。当前在场对手 ${G.cos.filter(c=>c.ai&&!c.dead).length} 家（上限 16 家）。</div>
+      <div class="opts">${[['关闭','不再有新公司进场'],['偶尔','约每 2 年 1 家（默认）'],['频繁','约每年 1 家，市场更卷']].map((o,i)=>`<button class="${er===i?'on':''}" onclick="G.entrants=${i?'true':'false'};G.entRate=${i===2?2:1};openWin('settings')"><b>${o[0]}</b><div class="mu" style="font-size:11px">${o[1]}</div></button>`).join('')}</div>
+      <h4 style="margin-top:14px">📑 财报</h4><div class="card"><label><input type="checkbox" ${G.autoReport!==false?'checked':''} onchange="G.autoReport=this.checked"> 每季发布时自动弹出财报</label><br><label><input type="checkbox" ${G.rpPause!==false?'checked':''} onchange="G.rpPause=this.checked"> 财报弹出时自动暂停（关闭财报后恢复原速度）</label></div>`}
     else if(setTab==='fx')h+=`<div class="mgrid">${[['sound','🔊 音效','收银、建造、警报、达成目标的提示音'],['music','🎵 背景音乐','轻柔的合成器氛围音乐'],['night','🌙 昼夜变化','约 2.5 分钟一个昼夜循环，夜晚建筑亮灯'],['season','🍂 四季变化','冬季偏冷、秋季偏暖的地图色调']].map(([k,n,d])=>`<label class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" ${FX[k]?'checked':''} onchange="setFX('${k}',this.checked)"><div><b>${n}</b><div class="mu" style="font-size:12px">${d}</div></div></label>`).join('')}</div><div class="mu" style="font-size:12px">iPhone 需要先关闭静音开关才能听到声音；音乐在你第一次点击屏幕后开始播放。</div>`
     else h+=`<div class="opts">${[['流畅','低分辨率、无车辆和窗户、24 帧，适合轻薄本'],['均衡','推荐：简化窗户、少量车辆、30 帧'],['高清','全细节、烟雾、60 帧']].map((o,i)=>`<button class="${Q===i?'on':''}" onclick="setQ(${i})">${o[0]}<small>${o[1]}</small></button>`).join('')}</div><div class="mu">静止的城市画面会预先渲染缓存，平移和缩放都很省电。</div>`}
   else if(w==='help'){t='❔ 游戏指南';
@@ -227,7 +232,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
     <b>人才</b>：「👔 人才」里可以聘请 6 类高管（零售/营销/技术/运营/财务/地产总监），他们提供加成并可自动定价、自动研发、自动选产品、自动还贷、自动调租；还可以设置全员薪资政策。<br>
     <b>拆迁</b>：点击地图上的居民楼可以支付补偿费拆迁；建造时直接选在居民楼上也会自动拆迁（橙色框）。拆迁会减少城市住房容量。<br>
     <b>经济规律</b>：原料和中间品的批发价由全国产量与需求决定；城市人口受住房容量限制，地产商盖楼会让城市扩张；地价看区位和周边开发密度；门店客流看周边居民密度（右下角「热力图」可查看）。<br>
-    <b>5. 互联网</b>：1993 年起陆续开放，建互联网公司 + 数据中心。<br>
+    <b>5. 互联网</b>：开局即可进入，建互联网公司 + 数据中心；各赛道在各自的风口年进入爆发期，此前市场较小。<br>
     <b>6. 对手</b>：15 位虚构创业者各有开局资产和扩张偏好：实业家先建工厂、地产商先囤地、互联网派先做网站……<br>
     <b>7. 股市</b>：买卖任意对手股票，持股 51% 可收购。<br><b>8. 卡顿？</b>点 ⚙️ 切到「流畅」。</div>`}
   $('#mt').textContent=t;$('#mb').innerHTML=h;renderNav(w);if(refresh)$('#mb').scrollTop=st}

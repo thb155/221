@@ -315,6 +315,7 @@ const NET={
  social:{n:'社交软件',ic:'💬',year:2004,arpu:0.25,pen:0.85},
  video:{n:'短视频',ic:'🎬',year:2012,arpu:0.35,pen:0.75},
 };
+const netStage=(k,yr)=>clamp(0.25+0.75*(yr-1990)/(NET[k].year-1990+3),0.25,1);
 const PK=Object.keys(P),NK=Object.keys(NET),ALLK=PK.concat(NK);
 const FINAL=PK.filter(k=>P[k].cat==='final'),MID=PK.filter(k=>P[k].cat==='mid'),RAW=PK.filter(k=>P[k].cat==='raw');
 const BASIC=['bread','cheese','drink','clothes','toys','furniture','chocolate'];
@@ -401,7 +402,7 @@ function macroMods(){const m={price:{},dem:1,demP:{},sent:1,re:0,loan:1,tax:0.15
     case 'taxcut':m.tax=0.10;break;case 'taxup':m.tax=0.20;break;
     case 'reban':m.re-=0.015;m.apt*=0.85;break}
   m.re+=(0.045-G.rate)*0.25;m.sent*=1+(0.045-G.rate)*3;return m}
-const loanRate=c=>Math.max(0.01,G.rate+0.02-(c.perk==='fin'?0.03:0)-0.015*exS(c,'cfo'));
+const loanRate=c=>Math.max(0.01,G.rate+0.02-(c.perk==='fin'?0.008:0)-0.015*exS(c,'cfo'));
 const depRate=c=>Math.max(0,G.rate-0.02+(c?0.005*exS(c,'cfo'):0));
 // ===== 员工 / 高管系统 =====
 const ROLES={
@@ -442,7 +443,7 @@ function autoMgr(c){const ex=c.ex||{},on=(r,k)=>ex[r]&&ex[r].auto&&ex[r].auto[k]
     for(const b of G.b){if(b.o!==c.id||b.prod)continue;
       if(b.type==='lab'){const cand=[...new Set([...mk,...sells])];const lock=PK.filter(p=>P[p].tech&&c.tech[p]<P[p].tech&&(sells.has(p)||mk.has(p)||rnd()<0.3));const pool=lock.length?lock:cand.length?cand:FINAL;
         b.prod=pool.sort((a,b2)=>c.tech[a]-c.tech[b2])[0];G.cities[b.c].dirty=true}
-      else if(b.type==='net'){const av=NK.filter(k=>yr>=NET[k].year-1&&!G.b.some(x=>x.o===c.id&&x.type==='net'&&x.prod===k));if(av.length){b.prod=av.sort((a,b2)=>NET[b2].arpu*NET[b2].pen-NET[a].arpu*NET[a].pen)[0];G.cities[b.c].dirty=true}}}}
+      else if(b.type==='net'){const av=NK.filter(k=>!G.b.some(x=>x.o===c.id&&x.type==='net'&&x.prod===k));if(av.length){b.prod=av.sort((a,b2)=>NET[b2].arpu*NET[b2].pen-NET[a].arpu*NET[a].pen)[0];G.cities[b.c].dirty=true}}}}
   if(on('coo','autoProd'))for(const b of G.b){if(b.o!==c.id||b.prod)continue;
     if(b.type==='factory'){const best=[...MID,...FINAL].filter(p=>!(P[p].tech&&c.tech[p]<P[p].tech)).map(p=>[p,(G.imp[p]-Object.keys(P[p].inp).reduce((s2,k)=>s2+P[p].inp[k]*G.imp[k],0))*P[p].rate]).sort((a,b2)=>b2[1]-a[1])[0];if(best){b.prod=best[0];b.hist=[];G.cities[b.c].dirty=true}}
     else if(b.type==='farm'||b.type==='forest'||b.type==='mine'){const best=RAW.filter(p=>P[p].src===b.type).sort((a,b2)=>G.imp[b2]*P[b2].rate-G.imp[a]*P[a].rate)[0];b.prod=best;b.hist=[];G.cities[b.c].dirty=true}}
@@ -485,7 +486,7 @@ function segMix(city){let m=(city.seg||[0.4,0.3,0.3]).slice();if(MM&&MM.dem<0.97
 const AIK=[{n:'简单',cash:0.7,exp:0.6,tech:0.6,price:1.06,smart:0},{n:'普通',cash:1,exp:1,tech:1,price:1,smart:0.5},{n:'困难',cash:1.5,exp:1.4,tech:1.5,price:0.97,smart:1}];
 const aik=()=>AIK[(G&&G.aiLv)??1];
 const scaleF=c=>{const n=c._nb||0;return 1+0.03*Math.max(0,n-10)/10*(1+Math.max(0,n-60)/60)};
-const PERKS={sales:{n:'营销天才',ic:'📣',d:'门店客流 +15%'},tech:{n:'技术极客',ic:'🧠',d:'研发速度 +40%'},fin:{n:'资本玩家',ic:'💹',d:'利率 3.5%，授信 +50%'},ind:{n:'实业家',ic:'🏗️',d:'工厂/原料产能 +20%'},re:{n:'地产嗅觉',ic:'🏘️',d:'租金收入 +15%'}};
+const PERKS={sales:{n:'营销天才',ic:'📣',d:'门店客流 +6%'},tech:{n:'技术极客',ic:'🧠',d:'研发速度 +12%'},fin:{n:'资本玩家',ic:'💹',d:'贷款利率 -0.8%，授信 +15%'},ind:{n:'实业家',ic:'🏗️',d:'工厂/原料产能 +6%'},re:{n:'地产嗅觉',ic:'🏘️',d:'租金收入 +6%'}};
 const PKGS={retail:{n:'零售起家',ic:'🏬',d:'市中心零售店 1 家',b:[['store']]},industry:{n:'实业起家',ic:'🏭',d:'牧场 + 奶酪工厂 + 便利店',b:[['farm','milk'],['factory','cheese'],['mini']]},tech:{n:'科技起家',ic:'🔬',d:'研发中心 + 互联网公司',b:[['lab','phone'],['net','portal']]},re:{n:'地产起家',ic:'🏠',d:'住宅楼 1 栋 + 土地 1 块',b:[['apt'],['land']]},cash:{n:'白手起家',ic:'💰',d:'额外现金 ¥80万',b:[]}};
 const PLAYER_COL='#22d3ee';
 const lvMul=lv=>1+0.6*(lv-1),opMul=lv=>1+0.4*(lv-1);
@@ -670,9 +671,9 @@ function simDay(){
     const c=G.cos[b.o];const op=opCost(b)*wageOp(c)*(1-0.15*exS(c,'coo'))*scaleF(c);c.cash-=op;c.m.op+=op;segAcc(b,'op',op);b.out=0;
     if(isRetail(b)||b.type==='dc'||b.type==='land')continue;
     if(isRent(b)){const s=reS[b.c],f=b.type==='apt'?s.fa:s.fo,ref=refRent(b);const tg=clamp(0.97*Math.pow(ref/Math.max(1,b.rent),1.6)*f,0,1);b.occ+=(tg-b.occ)*0.03;
-      const r=units(b)*b.occ*b.rent*(c.perk==='re'?1.15:1)*(1+0.1*exS(c,'cre'));c.cash+=r;c.m.rent+=r;segAcc(b,'rev',r);b.out=r;b.hist.push(r);if(b.hist.length>60)b.hist.shift();continue}
+      const r=units(b)*b.occ*b.rent*(c.perk==='re'?1.06:1)*(1+0.1*exS(c,'cre'));c.cash+=r;c.m.rent+=r;segAcc(b,'rev',r);b.out=r;b.hist.push(r);if(b.hist.length>60)b.hist.shift();continue}
     if(!b.prod){b.hist.push(0);if(b.hist.length>60)b.hist.shift();continue}
-    const pk=c.perk==='ind'?1.2:1;
+    const pk=c.perk==='ind'?1.06:1;
     if(b.type==='farm'||b.type==='forest'||b.type==='mine'){const q=P[b.prod].rate*lvMul(b.lv)*pk*effOf(c)*(1+0.1*exS(c,'coo'))*(0.9+rnd()*0.2);addInv(c,b.prod,q,techQ(c.tech[b.prod]),b.c);segAcc(b,'rev',q*G.imp[b.prod]);b.out=q;G.fl[b.prod].s+=q}
     else if(b.type==='factory'){const pp=P[b.prod];
       if(!(pp.tech&&c.tech[b.prod]<pp.tech)){const n=pp.rate*lvMul(b.lv)*pk*effOf(c)*(1+0.1*exS(c,'coo'));let ratio=1;
@@ -680,7 +681,7 @@ function simDay(){
         const made=n*Math.max(0,ratio);
         if(made>0){let qs=0,qw=0;for(const k in pp.inp){const r=take(c,k,pp.inp[k]*made,b);segAcc(b,'cogs',pp.inp[k]*made*G.imp[k]);qs+=r.ql*pp.inp[k];qw+=pp.inp[k];G.fl[k].d+=pp.inp[k]*made}segAcc(b,'rev',made*G.imp[b.prod]);addInv(c,b.prod,made,0.5*(qs/qw)+0.5*techQ(c.tech[b.prod]),b.c);b.out=made;G.fl[b.prod].s+=made}
         if(b.out>0&&Q===2&&b.c===G.cur&&rnd()<0.5)smoke.push(mkSmoke(b))}}
-    else if(b.type==='lab'||b.type==='net'){const pts=lvMul(b.lv)*(c.perk==='tech'?1.4:1)*MM.rd*effOf(c)*(1+0.6*exS(c,'cto'));c.rp[b.prod]+=pts;b.out=pts;checkTech(c,b.prod)}
+    else if(b.type==='lab'||b.type==='net'){const pts=lvMul(b.lv)*(c.perk==='tech'?1.12:1)*MM.rd*effOf(c)*(1+0.6*exS(c,'cto'));c.rp[b.prod]+=pts;b.out=pts;checkTech(c,b.prod)}
     b.hist.push(b.out);if(b.hist.length>60)b.hist.shift();
   }
   // 零售
@@ -689,7 +690,7 @@ function simDay(){
     for(const p of FINAL){const rf=refNow(p),ap=city.avgP[p]||rf;const D=P[p].dem*city.pop/50000*city.dmul[p]*clamp(rf/ap,0.5,1.6)*MM.dem*(MM.demP[p]||1);const list=[];
       for(const b of G.b){if(b.c!==city.id||!isRetail(b))continue;for(const s of b.slots){if(s.p!==p)continue;const c=G.cos[b.o];const v=c.inv[p];
         if(!(v.q>1||(c.autoImport&&c.cash>0))){s.sold=0;s.share=0;continue}const q=v.q>=40?v.ql:G.qm;
-        const base=traffic(city,b.x,b.y)*(c.perk==='sales'?1.15:1)*(1+0.08*exS(c,'retail'))*(0.85+0.15*b.lv)*(b.type==='market'?1.25:b.type==='mini'?0.8:1),qn=q*50/qrefOf(p),pr=rf/Math.max(1,s.price);
+        const base=traffic(city,b.x,b.y)*(c.perk==='sales'?1.06:1)*(1+0.08*exS(c,'retail'))*(0.85+0.15*b.lv)*(b.type==='market'?1.25:b.type==='mini'?0.8:1),qn=q*50/qrefOf(p),pr=rf/Math.max(1,s.price);
         const As=SEG.map(g=>base*Math.pow(qn/50,g.q)*Math.pow(1+c.brand[p]/g.b,g.bp)*Math.pow(pr,g.pe));list.push({b,s,c,As,q})}}
       if(WH.size){const sl=new Set(list.map(o=>o.c.id));for(const o of list)for(const x of sl){const h=warH(x,o.c.id);if(h)o.As=o.As.map(a=>a*(1-0.06*h))}}
       const mix=segMix(city),S=[0,0,0];list.forEach(o=>o.As.forEach((a,k)=>S[k]+=a));let pw=0,tot=0;
@@ -704,8 +705,8 @@ function simDay(){
   for(const b of G.b)if(isRetail(b)){const r=storeRev[b.id]||0;b.out=r;b.hist.push(r);if(b.hist.length>60)b.hist.shift();if(r>0&&b.o===0&&b.c===G.cur&&Q>0&&rnd()<0.3&&sfx('coin')!==1)floats.push({x:b.x+1,y:b.y+1,t:'+'+fmt(r),life:1})}
   // 互联网
   const yr=yearNow(),totPop=G.cities.reduce((s,c)=>s+c.pop*((CITY_DEF[c.id]||{}).net||1),0);
-  G.adopt=yr<1993?0:clamp(Math.pow(clamp((yr-1993)/22,0,1),1.4)+MM.adopt,0,1);
-  for(const k of NK){const U=yr>=NET[k].year?totPop*NET[k].pen*G.adopt:0;G.netU[k]=U;
+  G.adopt=clamp(0.04+0.96*Math.pow(clamp((yr-1990)/25,0,1),1.5)+MM.adopt,0.02,1);
+  for(const k of NK){const U=totPop*NET[k].pen*G.adopt*netStage(k,yr);G.netU[k]=U;
     const list=alive.filter(c=>c.tech[k]>=1);let sum=0;const A={};
     for(const c of list){A[c.id]=Math.pow(techQ(c.tech[k])/50,2)*(1+c.brand[k]/40)*Math.pow(c.monet[k],-0.8)*(1+0.15*Math.log10(1+c.users[k]));sum+=A[c.id]}
     const totU=list.reduce((x,c)=>x+c.users[k],0),sat=U>0?Math.min(1,totU/U):1,gr=0.03*(1-0.7*sat*sat);G.netSat=G.netSat||{};G.netSat[k]=sat;
@@ -727,7 +728,7 @@ function simDay(){
   if(G.day%7===0){for(const c of alive)if(c.ai)aiPrice(c);for(const c of alive){(c.ph=c.ph||[]).push(+sharePrice(c).toFixed(2));if(c.ph.length>260)c.ph.shift()}}
   for(const c of alive)c.sent=clamp(c.sent*(1+(rnd()-0.5)*0.03)+(MM.sent-c.sent)*0.02,0.3,1.8);
   if(d1.getUTCMonth()!==d0.getUTCMonth())monthEnd(d0);
-  for(const k of NK)if(d0.getUTCFullYear()<NET[k].year&&d1.getUTCFullYear()>=NET[k].year){addNews(`🌐 互联网新风口：「${NET[k].n}」时代来临！`);toast(`🌐 新产业解锁：${NET[k].ic} ${NET[k].n}`)}
+  for(const k of NK)if(d0.getUTCFullYear()<NET[k].year&&d1.getUTCFullYear()>=NET[k].year){addNews(`🌐 互联网新风口：「${NET[k].n}」进入爆发期，用户需求全面成熟！`);toast(`🌐 风口来临：${NET[k].ic} ${NET[k].n} 市场进入爆发期`)}
   checkGoal();
 }
 function checkTech(c,p){while(c.rp[p]>=techNeed(c.tech[p])){c.rp[p]-=techNeed(c.tech[p]);c.tech[p]++;
@@ -761,13 +762,13 @@ function buildReport(d){const me=G.cos[0],m=me.months[me.months.length-1];if(!m)
     loss:loss.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),win:win.map(x=>({n:lab(x.b),p:x.p,id:x.b.id})),subs,chg,hr:G.mlogHR||[],wars,noco:[...new Set(noco)],macro,pend:(G.pend||[]).length,tips:tips.slice(0,8)};
   G.mlogHR=[];G.report=R;G.reports=G.reports||[];G.reports.unshift(R);if(G.reports.length>24)G.reports.length=24;repSel=0;
   notify('report',`📑 ${R.label}发布`,`本期累计净利润 ${fmt(cum.profit)}${hasLY?`，同比 ${pctS(cum.profit,cumLY.profit)}`:''}${loss.length?`，${loss.length} 处亏损`:''}`,true);
-  if(G.autoReport!==false&&!curWin){openWin('report')}}
+  if(G.autoReport!==false&&curWin!=='scn'){if(G.rpPause!==false&&speed){rpResume=speed;setSpeed(0);acc=0}openWin('report')}}
 const pctS=(a,b)=>{if(b==null||!isFinite(b)||Math.abs(b)<1)return'—';const r=(a-b)/Math.abs(b)*100;return(r>=0?'+':'')+r.toFixed(1)+'%'};
 let repSel=0;
 const REVof=r=>r.rev+r.net+r.rent+r.whole;
 function monthEnd(d){
   scnCheck();renderGoal();
-  macroMonth();genMonth(d);hrMonth(G.cos[0]);warMonth();
+  macroMonth();genMonth(d);hrMonth(G.cos[0]);warMonth();entrantMonth();
   // 楼市周期
   for(const city of G.cities){let ev='';
     if(rnd()<0.05){city.trend+=0.02;ev=`🔥 ${city.n}楼市火爆，地价快速上涨`}else if(rnd()<0.04){city.trend-=0.028;ev=`🧊 ${city.n}出台楼市调控，地价承压`}
@@ -788,7 +789,7 @@ function monthEnd(d){
     else if(r<0.8){const city=pick(G.cities);growCity(city,6);addNews(`🏙️ ${city.n}政府规划新城区，大批住房开工`)}
     else{const c=G.cos[1+Math.floor(rnd()*(G.cos.length-1))];if(c&&!c.dead)addNews(`${c.av} ${c.founder}（${c.name}）：「${c.style.quote}」`)}}
 }
-function loanCap(c){return Math.max(0,Math.round((netWorth(c)+c.loan)*(c.perk==='fin'?0.75:0.5)*(MM?MM.loan:1)/10000)*10000-c.loan)}
+function loanCap(c){return Math.max(0,Math.round((netWorth(c)+c.loan)*(c.perk==='fin'?0.575:0.5)*(MM?MM.loan:1)/10000)*10000-c.loan)}
 function invVal(c){let v=0;for(const p of PK)v+=c.inv[p].q*G.imp[p]*0.7;return v}
 function netVal(c){let v=0;for(const k of NK)v+=c.users[k]*NET[k].arpu*c.monet[k]*365*0.8;return v}
 const reVal=c=>G.b.reduce((s,b)=>s+(b.o===c.id&&isRE(b)?bval(b):0),0);
@@ -905,7 +906,7 @@ function aiMonth(c){
   const nAI=G.cos.filter(x=>x.ai&&!x.dead).length,cnt=G.b.filter(b=>b.o===c.id).length;
   if(!(c.cash>1.1e6&&rnd()<0.5*st.exp*aik().exp&&cnt<6+G.day/200*st.exp*aik().exp*Math.min(1,Math.sqrt(5/nAI))))return aiUpgrade(c);
   const yr=yearNow(),acts=['retail','fac','chain','lab','net','re'],w=st.w.slice();
-  if(!NK.some(k=>yr>=NET[k].year))w[4]=0;
+  if(yr<1994)w[4]*=0.35;
   let tot=w.reduce((a,b)=>a+b,0),r=rnd()*tot,act='retail';for(let i=0;i<6;i++){r-=w[i];if(r<=0){act=acts[i];break}}
   const ci=rnd()<0.5?c.home:Math.floor(rnd()*G.cities.length),city=G.cities[ci];
   if(act==='retail'){const t=st.retail||(c.cash>4e6&&rnd()<0.3?'market':rnd()<0.25?'mini':'store');if(aiBuild(c,t,ci,true))addNews(`${BT[t].ic} ${c.name}在${city.n}新开${BT[t].n}`)}
@@ -915,7 +916,7 @@ function aiMonth(c){
   else if(act==='chain'){const mk=makes(c),need=[];for(const b of G.b)if(b.o===c.id&&b.type==='factory'&&b.prod)for(const k in P[b.prod].inp)if(!mk.has(k))need.push(k);
     if(need.length){const k=pick(need),t=P[k].cat==='raw'?P[k].src:'factory';if(!(P[k].tech&&c.tech[k]<P[k].tech)&&aiBuild(c,t,ci,false,k))addNews(`🔗 ${c.name}向上游延伸：自产${P[k].n}`)}}
   if(act==='lab'){if(G.b.filter(b=>b.o===c.id&&b.type==='lab').length<1+c.cash/6e6){const cand=[...(st.pref||[]),...makes(c)].filter(p=>P[p]);const p=cand.find(p=>P[p].tech&&c.tech[p]<P[p].tech)||pick(cand.length?cand:FINAL);if(aiBuild(c,'lab',c.home,false,p))addNews(`🔬 ${c.name}成立${P[p].n}研发中心`)}}
-  else if(act==='net'){const av=NK.filter(k=>yr>=NET[k].year&&!G.b.some(b=>b.o===c.id&&b.type==='net'&&b.prod===k));if(av.length){if(aiBuild(c,'net',c.home,false,av[0]))addNews(`${c.av} ${c.founder}宣布${c.name}进军「${NET[av[0]].n}」`)}}
+  else if(act==='net'){const av=NK.filter(k=>!G.b.some(b=>b.o===c.id&&b.type==='net'&&b.prod===k)).sort((a,b)=>(G.netU[b]||0)*NET[b].arpu-(G.netU[a]||0)*NET[a].arpu);if(av.length){if(aiBuild(c,'net',c.home,false,av[0]))addNews(`${c.av} ${c.founder}宣布${c.name}进军「${NET[av[0]].n}」`)}}
   else if(act==='re'){const short=[...G.cities].sort((a,b)=>(b.re?.fa||0)-(a.re?.fa||0))[0],hot=[...G.cities].sort((a,b)=>b.trend-a.trend)[0],cc=rnd()<0.5?short.id:rnd()<0.6?hot.id:ci,ccity=G.cities[cc],t=(ccity.re?.fa||1)>0.85&&rnd()<0.7?'apt':(ccity.re?.fo||1)>0.85&&rnd()<0.6?'office':rnd()<0.5?'land':'apt';
     if(aiBuild(c,t,cc,t!=='land'))addNews(`${BT[t].ic} ${c.name}在${G.cities[cc].n}${t==='land'?'拿下一块地':'开发'+BT[t].n}`)}
   if(G.b.some(b=>b.o===c.id&&b.type==='net')&&usersOf(c)>=capOf(c)*0.75&&c.cash>9e5)aiBuild(c,'dc',c.home,false);
@@ -928,6 +929,26 @@ function aiUpgrade(c){
   if(c.loan>0&&c.cash>c.loan+1.5e6){c.cash-=c.loan;c.loan=0}
 }
 
+/* ===== 新竞争对手随时间进场 ===== */
+const ENT_A=['新','华','中','天','海','金','盛','汇','凯','博','宇','誉','创','卓','旭','领'],ENT_B=['锐','联','泰','达','辰','航','域','峰','源','睿','驰','和','拓','邦','程','科'],ENT_C=['科技','集团','实业','控股','网络','智造','商贸','新材'];
+const ENT_F1=['孙','马','郭','何','高','罗','郑','梁','谢','宋','唐','韩','冯','邓','曹','彭'],ENT_F2=['一鸣','思齐','志远','若溪','明哲','嘉禾','启航','晓峰','雨桐','子墨','振华','可欣'];
+const ENT_AV=['🧑‍💼','👩‍💼','🧑‍🔧','👨‍💻','👩‍🔬','🧑‍🏫','👨‍🚀','👩‍🚀','🧑‍🌾','🦸','🧙','🧑‍🎓'];
+const hslHex=(h,sa,l)=>{const f=n=>{const k=(n+h/30)%12,a=sa*Math.min(l,1-l),v=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(v*255).toString(16).padStart(2,'0')};return'#'+f(0)+f(8)+f(4)};
+function entrantMonth(){if(!G||G.entrants===false)return;const ai=G.cos.filter(c=>c.ai&&!c.dead),yrs=G.day/365;
+  if(yrs<1||ai.length>=16)return;const p=(G.entRate??1)*(0.035+(ai.length<4?0.06:ai.length<7?0.02:0));if(rnd()>p)return;spawnEntrant()}
+function spawnEntrant(def){const yrs=G.day/365,used=new Set(G.cos.map(c=>c.sk));let base=def||AI_DEF.find(a=>!used.has(a.k)&&rnd()<0.5)||AI_DEF.find(a=>!used.has(a.k)),gen=false;
+  if(!base){gen=true;base=pick(AI_DEF)}
+  const id=G.cos.length,cash=Math.min(4e7,(2.4e6+yrs*6e5)*(0.8+rnd()*0.5))*aik().cash;
+  const c=newCompany(id,base,cash,true);c.entrant=G.day;
+  if(gen){const names=new Set(G.cos.map(x=>x.name));let n,k=0;do{n=pick(ENT_A)+pick(ENT_B)+pick(ENT_C);k++}while(names.has(n)&&k<30);c.name=n;c.founder=pick(ENT_F1)+pick(ENT_F2);c.av=pick(ENT_AV);c.col=hslHex(rnd()*360,0.7,0.58)}
+  c.home=Math.floor(rnd()*G.cities.length);
+  // 后来者带着行业平均技术进场（打七折），不再从零开始
+  const peers=G.cos.filter(x=>x.ai&&!x.dead&&x.id!==id);for(const p of ALLK){const avg=peers.length?peers.reduce((s,x)=>s+x.tech[p],0)/peers.length:0;c.tech[p]=Math.floor(avg*0.7*aik().tech)}
+  for(const k of NK)c.brand[k]=3+rnd()*6;
+  G.cos.push(c);giveStart(c,base.start,c.home);
+  if(yrs>4&&rnd()<0.6)giveStart(c,base.start.filter(([t])=>BT[t]&&BT[t].g==='retail').slice(0,1),(c.home+1)%G.cities.length);
+  const msg=`${c.av} ${c.founder}创立「${c.name}」，在${G.cities[c.home].n}进场（${base.style}），启动资金 ${fmt(c.cash)}`;
+  addNews('🆕 新玩家入局：'+msg);notify('biz','🆕 新竞争对手入局',msg,true);return c}
 /* ================= 目标 ================= */
 const myB=t=>G.b.filter(b=>b.o===0&&(t==='retail'?isRetail(b):b.type===t));
 const GOALS=[
@@ -1145,15 +1166,16 @@ $('#mini').addEventListener('click',e=>{const r=e.target.getBoundingClientRect()
   const a=(mx-MOX)/MS,b=(my-MOY)/(MS*0.5),gx=(a+b)/2,gy=(b-a)/2;const [ix,iy]=iso(gx,gy);cam.x=VW/2-ix*cam.z;cam.y=VH/2-iy*cam.z});
 
 /* ================= 主循环 ================= */
-const SPD=[0,1,4,12];let lastT=performance.now(),lastFrame=0,lastUI=0,lastPanel=0,lastMini=0,uiDirty=false;
+const SPD=[0,1,4,12];let lastT=performance.now(),lastFrame=0,lastUI=0,lastPanel=0,lastMini=0,uiDirty=false,pausedKey='';
 function loop(t){requestAnimationFrame(loop);
   const fps=[24,30,60][Q];if(t-lastFrame<1000/fps-2)return;lastFrame=t;
   const dt=Math.min(0.15,(t-lastT)/1000);lastT=t;T+=dt;
-  if(G&&!G.over){acc+=dt*SPD[speed];let n=0;while(acc>=1&&n<20){acc-=1;simDay();n++;uiDirty=true}
+  if(G&&!G.over){acc+=dt*SPD[speed];let n=0;while(acc>=1&&n<20&&speed){acc-=1;simDay();n++;uiDirty=true}if(!speed)acc=0;
     if(cars.length)stepCars(dt*(speed?1:0.3));stepTrucks(dt*(speed?1:0.2));
     for(const s of smoke){s.x+=s.vx;s.y+=s.vy;s.r+=0.05;s.life-=dt*0.5}if(smoke.length)smoke=smoke.filter(s=>s.life>0).slice(-120);
     for(const f of floats)f.life-=dt*0.7;if(floats.length)floats=floats.filter(f=>f.life>0).slice(-20);
-    if(uiDirty&&t-lastUI>250){lastUI=t;topUI();uiDirty=false}
+    if((uiDirty&&t-lastUI>250)||(!speed&&t-lastUI>400)){lastUI=t;topUI();uiDirty=false}
+    if(!speed&&t-lastPanel>700){lastPanel=t;const me=G.cos[0],k=Math.round(me.cash)+'|'+G.b.length+'|'+me.loan;if(k!==pausedKey){pausedKey=k;if(!busy()){if(sel)renderSide();else if(selH)renderHouse();if(curWin&&curWin!=='settings'&&curWin!=='scn')openWin(curWin,true)}}}
     if(t-lastPanel>1000){lastPanel=t;panelRefresh()}
     if(t-lastMini>400){lastMini=t;drawMini()}}
   render()}
@@ -1266,9 +1288,9 @@ function renderSide(){const b=sel;if(!b||!G.b.includes(b)){select(null);return}
       <div class="row"><span class="k">产出品质</span><span>${c.inv[b.prod].q>0?c.inv[b.prod].ql.toFixed(1):'-'}</span></div>
       <div class="row"><span class="k">比进口省/件</span><span class="pos">${fmt(G.imp[b.prod]-Object.keys(pp.inp).reduce((s,k)=>s+pp.inp[k]*G.imp[k],0))}</span></div>`}h+='</div>'}
   else if(b.type==='lab'||b.type==='net'){const keys=b.type==='lab'?PK:NK,yr=yearNow();
-    h+=`<div class="card"><h4>${b.type==='lab'?'研究课题':'开发产品'}</h4>${sel1(keys.map(p=>[p,`${ic(p)} ${nm(p)} (Lv${c.tech[p]})${NET[p]&&yr<NET[p].year?' · '+NET[p].year+'年开放':''}`]))}`;
+    h+=`<div class="card"><h4>${b.type==='lab'?'研究课题':'开发产品'}</h4>${sel1(keys.map(p=>[p,`${ic(p)} ${nm(p)} (Lv${c.tech[p]})${NET[p]&&yr<NET[p].year?' · '+NET[p].year+'年进入爆发期':''}`]))}`;
     if(b.prod){h+=`<div class="row"><span class="k">技术等级</span><b>Lv${c.tech[b.prod]} · 品质 ${techQ(c.tech[b.prod])}</b></div><div class="bar"><i style="width:${c.rp[b.prod]/techNeed(c.tech[b.prod])*100}%"></i></div><div class="row"><span class="k">进度</span><span>${c.rp[b.prod].toFixed(0)}/${techNeed(c.tech[b.prod])}（+${b.out.toFixed(1)}/日）</span></div>`;
-      if(NET[b.prod]){const k=b.prod;h+=`<div class="row"><span class="k">状态</span><span>${c.tech[k]>=1?(yr>=NET[k].year?'🟢 运营中':'⏳ 等待 '+NET[k].year+' 年'):'🛠️ 开发中（Lv1 上线）'}</span></div><div class="row"><span class="k">用户</span><b>${fnum(c.users[k])}</b></div><div class="row"><span class="k">服务器容量</span><span>${fnum(usersOf(c))} / ${fnum(capOf(c))}</span></div>${capOf(c)===0?'<div class="neg">⚠ 需要建数据中心才能承载用户</div>':''}`}}
+      if(NET[b.prod]){const k=b.prod;h+=`<div class="row"><span class="k">状态</span><span>${c.tech[k]>=1?'🟢 运营中'+(yr<NET[k].year?`（市场成熟度 ${Math.round(netStage(k,yr)*100)}%，${NET[k].year} 年爆发）`:''):'🛠️ 开发中（Lv1 上线）'}</span></div><div class="row"><span class="k">用户</span><b>${fnum(c.users[k])}</b></div><div class="row"><span class="k">服务器容量</span><span>${fnum(usersOf(c))} / ${fnum(capOf(c))}</span></div>${capOf(c)===0?'<div class="neg">⚠ 需要建数据中心才能承载用户</div>':''}`}}
     h+='</div>'}
   else if(b.type==='wh'){const nwh=((LOG.wh[c.id]||{})[b.c]||[b]).length||1,items=PK.map(p=>[p,c.ci[b.c][p].q/nwh]).filter(x=>x[1]>=1).sort((a,b2)=>b2[1]*G.imp[b2[0]]-a[1]*G.imp[a[0]]);
     const served=G.b.filter(x=>x.o===c.id&&x.c===b.c&&(isRetail(x)||x.type==='factory')).length;
@@ -1314,7 +1336,8 @@ window.buyAuction=i=>{const a=G.auctions[i];if(!a)return;const city=G.cities[a.c
 
 /* ================= 窗口 ================= */
 let finPer='m',ibTab='all',setTab='save',curWin=null,reTab='overview',hrTab='team',hrRole=null,finTab='is',subSel=null;
-function closeModal(){$('#modal').classList.add('hidden');curWin=null}
+let rpResume=0;
+function closeModal(){$('#modal').classList.add('hidden');curWin=null;if(rpResume){if(!speed&&G&&!G.over)setSpeed(rpResume);rpResume=0}}
 $('#mx').onclick=closeModal;$('#modal').addEventListener('pointerdown',e=>{if(e.target.id==='modal')closeModal()});
 document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{if(MOBILE)document.body.classList.remove('showb');openWin(b.dataset.w)});
 const logoCh=c=>(c.logo||c.name.replace(/^[\s]+/,'')[0]||'?');
@@ -1350,11 +1373,11 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       for(const b of list)h+=`<tr><td>${BT[b.type].ic} ${BT[b.type].n} ★${b.lv}</td><td>${G.cities[b.c].n}</td><td>${isRent(b)?(b.occ*100).toFixed(0)+'%':'-'}</td><td>${isRent(b)?fmt(b.out):'-'}</td><td>${fmt(b.paid)}</td><td>${fmt(bval(b))}</td><td class="${bval(b)>=b.paid?'pos':'neg'}">${fmt(bval(b)-b.paid)}</td><td><button onclick="goTo(${b.id})">管理</button></td></tr>`;
       if(!list.length)h+='<tr><td colspan="8" class="mu">你还没有物业。左侧「🏠 地产」分组可以买地、盖住宅楼和写字楼。</td></tr>';h+='</table>'}}
   else if(w==='net'){t='🌐 互联网产业';const yr=yearNow();
-    h=`<div class="mu" style="margin-bottom:8px">互联网渗透率 ${(G.adopt*100).toFixed(1)}%（1993 年起逐年上升）。建「互联网公司」开发产品（Lv1 上线），建「数据中心」承载用户。商业化越高单用户收入越高，但用户越容易流失。</div>
+    h=`<div class="mu" style="margin-bottom:8px">互联网渗透率 ${(G.adopt*100).toFixed(1)}%（开局即可进入，逐年上升；各赛道到风口年进入爆发期）。建「互联网公司」开发产品（Lv1 上线），建「数据中心」承载用户。商业化越高单用户收入越高，但用户越容易流失。</div>
     <div class="row"><span>我的服务器：${fnum(usersOf(me))} / ${fnum(capOf(me))} 用户</span><span>本月互联网收入 ${fmt(me.m.net)}</span></div><div class="mu" style="font-size:12px;margin:4px 0">用户上限 = 六城总人口 ${fnum(G.cities.reduce((x,c)=>x+c.pop,0))} × 产品渗透率 × 互联网普及度。渗透越接近上限增长越慢（见顶）；单个产品份额超过 60% 可能被反垄断罚款。</div>
-    <table><tr><th>产品</th><th>开放</th><th>用户上限</th><th>已渗透</th><th>我的用户</th><th>份额</th><th>技术</th><th>商业化</th><th>广告/日</th><th>领先者</th></tr>`;
+    <table><tr><th>产品</th><th>市场成熟度</th><th>用户上限</th><th>已渗透</th><th>我的用户</th><th>份额</th><th>技术</th><th>商业化</th><th>广告/日</th><th>领先者</th></tr>`;
     for(const k of NK){const U=G.netU[k]||0;const lead=G.cos.filter(c=>!c.dead).sort((a,b)=>b.users[k]-a.users[k])[0];
-      h+=`<tr><td>${NET[k].ic} ${NET[k].n}</td><td>${yr>=NET[k].year?'✅':NET[k].year}</td><td>${fnum(U)}</td><td style="width:90px"><div class="bar"><i style="width:${((G.netSat||{})[k]||0)*100}%;background:${((G.netSat||{})[k]||0)>0.85?'#f43f5e':'#22c55e'}"></i></div></td><td>${fnum(me.users[k])}${G.anti&&G.anti[0+'_'+k]>G.day?' ⚖️':''}</td><td>${U?(me.users[k]/U*100).toFixed(1):'0'}%</td><td>Lv${me.tech[k]}</td>
+      h+=`<tr><td>${NET[k].ic} ${NET[k].n}</td><td>${yr>=NET[k].year?'🔥 爆发':Math.round(netStage(k,yr)*100)+'%·'+NET[k].year}</td><td>${fnum(U)}</td><td style="width:90px"><div class="bar"><i style="width:${((G.netSat||{})[k]||0)*100}%;background:${((G.netSat||{})[k]||0)>0.85?'#f43f5e':'#22c55e'}"></i></div></td><td>${fnum(me.users[k])}${G.anti&&G.anti[0+'_'+k]>G.day?' ⚖️':''}</td><td>${U?(me.users[k]/U*100).toFixed(1):'0'}%</td><td>Lv${me.tech[k]}</td>
       <td><select onchange="G.cos[0].monet['${k}']=+this.value">${[[0.6,'低'],[1,'中'],[1.6,'高']].map(([v,l])=>`<option value="${v}" ${Math.abs(me.monet[k]-v)<0.05?'selected':''}>${l}</option>`).join('')}</select></td>
       <td><input type="number" min="0" step="500" value="${me.ad[k]}" style="width:78px" onchange="G.cos[0].ad['${k}']=Math.max(0,+this.value||0)"></td><td>${lead&&lead.users[k]>0?`<span style="color:${lead.col}">${lead.name}</span> ${fnum(lead.users[k])}`:'-'}</td></tr>`}
     h+='</table>'}
@@ -1454,7 +1477,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
     else{const c=R.cum,qs=R.qs,REV=x=>x?x.rev+x.net+x.rent+x.whole:null,GP=x=>x?REV(x)-x.purch:null,OP=x=>x?GP(x)-x.op-(x.sal||0)-(x.logi||0)-x.ad:null,PF=x=>x?x.profit:null;
       const row=(n,f,bold)=>`<tr${bold?' style="background:rgba(56,189,248,.06)"':''}><td>${bold?'<b>'+n+'</b>':n}</td><td>${fmt(f(c))}</td><td class="mu">${R.cumLY?pctS(f(c),f(R.cumLY)):'—'}</td><td>${fmt(f(qs))}</td><td class="mu">${R.qp?pctS(f(qs),f(R.qp)):'—'}</td><td class="mu">${R.qLY?pctS(f(qs),f(R.qLY)):'—'}</td></tr>`;
       h=`<div class="row" style="flex-wrap:wrap;gap:8px"><select onchange="repSel=+this.value;openWin('report')" style="font-size:15px;font-weight:700">${RS.map((x,i)=>`<option value="${i}" ${x===R?'selected':''}>${x.label}</option>`).join('')}</select>
-      <label class="mu" style="font-size:12px"><input type="checkbox" ${G.autoReport!==false?'checked':''} onchange="G.autoReport=this.checked"> 每季发布时自动弹出</label></div>
+      <label class="mu" style="font-size:12px"><input type="checkbox" ${G.autoReport!==false?'checked':''} onchange="G.autoReport=this.checked"> 每季发布时自动弹出</label><label class="mu" style="font-size:12px;margin-left:8px"><input type="checkbox" ${G.rpPause!==false?'checked':''} onchange="G.rpPause=this.checked"> 弹出时暂停</label></div>
       <div class="kpis">${[['本期累计营收',fmt(REV(c)),R.cumLY?'同比 '+pctS(REV(c),REV(R.cumLY)):''],['本期累计净利润',fmt(c.profit),R.cumLY?'同比 '+pctS(c.profit,R.cumLY.profit):'',c.profit>=0?'pos':'neg'],['单季净利润',fmt(qs.profit),R.qp?'环比 '+pctS(qs.profit,R.qp.profit):'',qs.profit>=0?'pos':'neg'],['毛利率',REV(c)?(GP(c)/REV(c)*100).toFixed(1)+'%':'—','净利率 '+(REV(c)?(c.profit/REV(c)*100).toFixed(1)+'%':'—')],['每股收益',(c.profit/SHARES).toFixed(2),'股价 '+R.sp.toFixed(1)+'（本季 '+pctS(R.sp,R.sp0)+'）'],['净资产',fmt(R.nw),'资产负债率 '+(R.debt*100).toFixed(0)+'%']].map(([n,v,s2,cls])=>`<div class="kpi"><span>${n}</span><b class="${cls||''}">${v}</b><small>${s2}</small></div>`).join('')}</div>
       <div class="card"><h4>📑 主要财务数据</h4><table><tr><th>项目</th><th>本期累计（1–${R.q*3+3} 月）</th><th>同比</th><th>第 ${R.q+1} 季度</th><th>环比</th><th>同比</th></tr>
       ${row('营业收入',REV,1)}${row('　零售收入',x=>x.rev)}${row('　互联网收入',x=>x.net)}${row('　租金收入',x=>x.rent)}${row('营业成本',x=>x.purch)}${row('毛利',GP,1)}${row('期间费用',x=>x.op+(x.sal||0)+(x.logi||0)+x.ad)}${row('营业利润',OP,1)}${row('财务费用净额',x=>x.int-x.dep)}${row('所得税',x=>x.tax||0)}${row('净利润',PF,1)}</table></div>
@@ -1517,7 +1540,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       <div class="row"><input type="range" min="0" max="3" step="0.1" value="${v}" style="flex:1" oninput="G.mset.m['${d.k}']=+this.value;this.nextElementSibling.textContent=(+this.value===0?'关闭':'×'+(+this.value).toFixed(1))"><span style="width:40px;text-align:right">${v===0?'关闭':'×'+v.toFixed(1)}</span></div><div class="mu" style="font-size:11px">默认约每 ${(1/(d.p*12)).toFixed(0)} 年一次</div></div>`}).join('')}</div>
     <h4 style="margin-top:10px">📜 历史事件</h4><div class="mu" style="line-height:1.8;font-size:12px">${G.mlog.length?G.mlog.map(l=>{const dt=new Date(l.t);return`[${dt.getUTCFullYear()}/${dt.getUTCMonth()+1}] ${MDEF(l.k).ic} ${l.txt}`}).join('<br>'):'暂无'}</div>`}
   else if(w==='settings'){t='⚙️ 设置';
-    h=`<div class="tabs">${[['save','💾 存档 / 读档'],['gfx','🎨 画质'],['fx','🔊 音效与氛围']].map(([k,v])=>`<button class="${setTab===k?'on':''}" onclick="setTab='${k}';openWin('settings')">${v}</button>`).join('')}</div>`;
+    h=`<div class="tabs">${[['save','💾 存档 / 读档'],['game','🎮 游戏规则'],['gfx','🎨 画质'],['fx','🔊 音效与氛围']].map(([k,v])=>`<button class="${setTab===k?'on':''}" onclick="setTab='${k}';openWin('settings')">${v}</button>`).join('')}</div>`;
     if(setTab==='save'||!G){h+=`${G?`<div class="row" style="margin-bottom:8px"><span class="mu">当前：${G.cos[0].name} · ${gameDateStr()} · 净资产 ${fmt(netWorth(G.cos[0]))}</span><button class="pri" onclick="quickSave()">⚡ 快速存档</button></div>`:'<div class="mu" style="margin-bottom:8px">选择一个存档读取，或导入存档文件。</div>'}
       <div id="slots" class="mgrid"><div class="mu">读取存档列表中…</div></div>
       <h4 style="margin-top:14px">📤 导出 / 📥 导入（在电脑和手机之间转移存档）</h4>
@@ -1525,6 +1548,10 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label class="tag" style="padding:7px 12px;cursor:pointer;background:#253247;border:1px solid var(--bd);border-radius:8px">📁 选择存档文件<input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="importFile(this)"></label></div>
       <textarea id="impTxt" placeholder="或把存档代码粘贴到这里" style="width:100%;height:70px;margin-top:8px;font:12px monospace;color:var(--tx);background:#0f172a;border:1px solid var(--bd);border-radius:8px;padding:6px"></textarea>
       <button class="pri" style="margin-top:6px" onclick="importText()">📥 导入并读取</button></div>`;setTimeout(renderSlots,0)}
+    else if(setTab==='game'){const er=G.entrants===false?0:(G.entRate??1)>=1.8?2:1;
+      h+=`<h4>🆕 新竞争对手进场</h4><div class="mu" style="font-size:12px;margin-bottom:6px">开局之后，没被选中的对手和全新创业公司会陆续进入市场，带着行业平均七成的技术和随年份增长的资金。当前在场对手 ${G.cos.filter(c=>c.ai&&!c.dead).length} 家（上限 16 家）。</div>
+      <div class="opts">${[['关闭','不再有新公司进场'],['偶尔','约每 2 年 1 家（默认）'],['频繁','约每年 1 家，市场更卷']].map((o,i)=>`<button class="${er===i?'on':''}" onclick="G.entrants=${i?'true':'false'};G.entRate=${i===2?2:1};openWin('settings')"><b>${o[0]}</b><div class="mu" style="font-size:11px">${o[1]}</div></button>`).join('')}</div>
+      <h4 style="margin-top:14px">📑 财报</h4><div class="card"><label><input type="checkbox" ${G.autoReport!==false?'checked':''} onchange="G.autoReport=this.checked"> 每季发布时自动弹出财报</label><br><label><input type="checkbox" ${G.rpPause!==false?'checked':''} onchange="G.rpPause=this.checked"> 财报弹出时自动暂停（关闭财报后恢复原速度）</label></div>`}
     else if(setTab==='fx')h+=`<div class="mgrid">${[['sound','🔊 音效','收银、建造、警报、达成目标的提示音'],['music','🎵 背景音乐','轻柔的合成器氛围音乐'],['night','🌙 昼夜变化','约 2.5 分钟一个昼夜循环，夜晚建筑亮灯'],['season','🍂 四季变化','冬季偏冷、秋季偏暖的地图色调']].map(([k,n,d])=>`<label class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" ${FX[k]?'checked':''} onchange="setFX('${k}',this.checked)"><div><b>${n}</b><div class="mu" style="font-size:12px">${d}</div></div></label>`).join('')}</div><div class="mu" style="font-size:12px">iPhone 需要先关闭静音开关才能听到声音；音乐在你第一次点击屏幕后开始播放。</div>`
     else h+=`<div class="opts">${[['流畅','低分辨率、无车辆和窗户、24 帧，适合轻薄本'],['均衡','推荐：简化窗户、少量车辆、30 帧'],['高清','全细节、烟雾、60 帧']].map((o,i)=>`<button class="${Q===i?'on':''}" onclick="setQ(${i})">${o[0]}<small>${o[1]}</small></button>`).join('')}</div><div class="mu">静止的城市画面会预先渲染缓存，平移和缩放都很省电。</div>`}
   else if(w==='help'){t='❔ 游戏指南';
@@ -1541,7 +1568,7 @@ function openWin(w,refresh){if(!G&&w!=='settings')return;curWin=w;$('#modal').cl
     <b>人才</b>：「👔 人才」里可以聘请 6 类高管（零售/营销/技术/运营/财务/地产总监），他们提供加成并可自动定价、自动研发、自动选产品、自动还贷、自动调租；还可以设置全员薪资政策。<br>
     <b>拆迁</b>：点击地图上的居民楼可以支付补偿费拆迁；建造时直接选在居民楼上也会自动拆迁（橙色框）。拆迁会减少城市住房容量。<br>
     <b>经济规律</b>：原料和中间品的批发价由全国产量与需求决定；城市人口受住房容量限制，地产商盖楼会让城市扩张；地价看区位和周边开发密度；门店客流看周边居民密度（右下角「热力图」可查看）。<br>
-    <b>5. 互联网</b>：1993 年起陆续开放，建互联网公司 + 数据中心。<br>
+    <b>5. 互联网</b>：开局即可进入，建互联网公司 + 数据中心；各赛道在各自的风口年进入爆发期，此前市场较小。<br>
     <b>6. 对手</b>：15 位虚构创业者各有开局资产和扩张偏好：实业家先建工厂、地产商先囤地、互联网派先做网站……<br>
     <b>7. 股市</b>：买卖任意对手股票，持股 51% 可收购。<br><b>8. 卡顿？</b>点 ⚙️ 切到「流畅」。</div>`}
   $('#mt').textContent=t;$('#mb').innerHTML=h;renderNav(w);if(refresh)$('#mb').scrollTop=st}

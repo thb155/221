@@ -27,7 +27,7 @@ function aiMonth(c){
   const nAI=G.cos.filter(x=>x.ai&&!x.dead).length,cnt=G.b.filter(b=>b.o===c.id).length;
   if(!(c.cash>1.1e6&&rnd()<0.5*st.exp*aik().exp&&cnt<6+G.day/200*st.exp*aik().exp*Math.min(1,Math.sqrt(5/nAI))))return aiUpgrade(c);
   const yr=yearNow(),acts=['retail','fac','chain','lab','net','re'],w=st.w.slice();
-  if(!NK.some(k=>yr>=NET[k].year))w[4]=0;
+  if(yr<1994)w[4]*=0.35;
   let tot=w.reduce((a,b)=>a+b,0),r=rnd()*tot,act='retail';for(let i=0;i<6;i++){r-=w[i];if(r<=0){act=acts[i];break}}
   const ci=rnd()<0.5?c.home:Math.floor(rnd()*G.cities.length),city=G.cities[ci];
   if(act==='retail'){const t=st.retail||(c.cash>4e6&&rnd()<0.3?'market':rnd()<0.25?'mini':'store');if(aiBuild(c,t,ci,true))addNews(`${BT[t].ic} ${c.name}在${city.n}新开${BT[t].n}`)}
@@ -37,7 +37,7 @@ function aiMonth(c){
   else if(act==='chain'){const mk=makes(c),need=[];for(const b of G.b)if(b.o===c.id&&b.type==='factory'&&b.prod)for(const k in P[b.prod].inp)if(!mk.has(k))need.push(k);
     if(need.length){const k=pick(need),t=P[k].cat==='raw'?P[k].src:'factory';if(!(P[k].tech&&c.tech[k]<P[k].tech)&&aiBuild(c,t,ci,false,k))addNews(`🔗 ${c.name}向上游延伸：自产${P[k].n}`)}}
   if(act==='lab'){if(G.b.filter(b=>b.o===c.id&&b.type==='lab').length<1+c.cash/6e6){const cand=[...(st.pref||[]),...makes(c)].filter(p=>P[p]);const p=cand.find(p=>P[p].tech&&c.tech[p]<P[p].tech)||pick(cand.length?cand:FINAL);if(aiBuild(c,'lab',c.home,false,p))addNews(`🔬 ${c.name}成立${P[p].n}研发中心`)}}
-  else if(act==='net'){const av=NK.filter(k=>yr>=NET[k].year&&!G.b.some(b=>b.o===c.id&&b.type==='net'&&b.prod===k));if(av.length){if(aiBuild(c,'net',c.home,false,av[0]))addNews(`${c.av} ${c.founder}宣布${c.name}进军「${NET[av[0]].n}」`)}}
+  else if(act==='net'){const av=NK.filter(k=>!G.b.some(b=>b.o===c.id&&b.type==='net'&&b.prod===k)).sort((a,b)=>(G.netU[b]||0)*NET[b].arpu-(G.netU[a]||0)*NET[a].arpu);if(av.length){if(aiBuild(c,'net',c.home,false,av[0]))addNews(`${c.av} ${c.founder}宣布${c.name}进军「${NET[av[0]].n}」`)}}
   else if(act==='re'){const short=[...G.cities].sort((a,b)=>(b.re?.fa||0)-(a.re?.fa||0))[0],hot=[...G.cities].sort((a,b)=>b.trend-a.trend)[0],cc=rnd()<0.5?short.id:rnd()<0.6?hot.id:ci,ccity=G.cities[cc],t=(ccity.re?.fa||1)>0.85&&rnd()<0.7?'apt':(ccity.re?.fo||1)>0.85&&rnd()<0.6?'office':rnd()<0.5?'land':'apt';
     if(aiBuild(c,t,cc,t!=='land'))addNews(`${BT[t].ic} ${c.name}在${G.cities[cc].n}${t==='land'?'拿下一块地':'开发'+BT[t].n}`)}
   if(G.b.some(b=>b.o===c.id&&b.type==='net')&&usersOf(c)>=capOf(c)*0.75&&c.cash>9e5)aiBuild(c,'dc',c.home,false);
@@ -50,3 +50,23 @@ function aiUpgrade(c){
   if(c.loan>0&&c.cash>c.loan+1.5e6){c.cash-=c.loan;c.loan=0}
 }
 
+/* ===== 新竞争对手随时间进场 ===== */
+const ENT_A=['新','华','中','天','海','金','盛','汇','凯','博','宇','誉','创','卓','旭','领'],ENT_B=['锐','联','泰','达','辰','航','域','峰','源','睿','驰','和','拓','邦','程','科'],ENT_C=['科技','集团','实业','控股','网络','智造','商贸','新材'];
+const ENT_F1=['孙','马','郭','何','高','罗','郑','梁','谢','宋','唐','韩','冯','邓','曹','彭'],ENT_F2=['一鸣','思齐','志远','若溪','明哲','嘉禾','启航','晓峰','雨桐','子墨','振华','可欣'];
+const ENT_AV=['🧑‍💼','👩‍💼','🧑‍🔧','👨‍💻','👩‍🔬','🧑‍🏫','👨‍🚀','👩‍🚀','🧑‍🌾','🦸','🧙','🧑‍🎓'];
+const hslHex=(h,sa,l)=>{const f=n=>{const k=(n+h/30)%12,a=sa*Math.min(l,1-l),v=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(v*255).toString(16).padStart(2,'0')};return'#'+f(0)+f(8)+f(4)};
+function entrantMonth(){if(!G||G.entrants===false)return;const ai=G.cos.filter(c=>c.ai&&!c.dead),yrs=G.day/365;
+  if(yrs<1||ai.length>=16)return;const p=(G.entRate??1)*(0.035+(ai.length<4?0.06:ai.length<7?0.02:0));if(rnd()>p)return;spawnEntrant()}
+function spawnEntrant(def){const yrs=G.day/365,used=new Set(G.cos.map(c=>c.sk));let base=def||AI_DEF.find(a=>!used.has(a.k)&&rnd()<0.5)||AI_DEF.find(a=>!used.has(a.k)),gen=false;
+  if(!base){gen=true;base=pick(AI_DEF)}
+  const id=G.cos.length,cash=Math.min(4e7,(2.4e6+yrs*6e5)*(0.8+rnd()*0.5))*aik().cash;
+  const c=newCompany(id,base,cash,true);c.entrant=G.day;
+  if(gen){const names=new Set(G.cos.map(x=>x.name));let n,k=0;do{n=pick(ENT_A)+pick(ENT_B)+pick(ENT_C);k++}while(names.has(n)&&k<30);c.name=n;c.founder=pick(ENT_F1)+pick(ENT_F2);c.av=pick(ENT_AV);c.col=hslHex(rnd()*360,0.7,0.58)}
+  c.home=Math.floor(rnd()*G.cities.length);
+  // 后来者带着行业平均技术进场（打七折），不再从零开始
+  const peers=G.cos.filter(x=>x.ai&&!x.dead&&x.id!==id);for(const p of ALLK){const avg=peers.length?peers.reduce((s,x)=>s+x.tech[p],0)/peers.length:0;c.tech[p]=Math.floor(avg*0.7*aik().tech)}
+  for(const k of NK)c.brand[k]=3+rnd()*6;
+  G.cos.push(c);giveStart(c,base.start,c.home);
+  if(yrs>4&&rnd()<0.6)giveStart(c,base.start.filter(([t])=>BT[t]&&BT[t].g==='retail').slice(0,1),(c.home+1)%G.cities.length);
+  const msg=`${c.av} ${c.founder}创立「${c.name}」，在${G.cities[c.home].n}进场（${base.style}），启动资金 ${fmt(c.cash)}`;
+  addNews('🆕 新玩家入局：'+msg);notify('biz','🆕 新竞争对手入局',msg,true);return c}
